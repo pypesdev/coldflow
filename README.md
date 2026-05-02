@@ -22,6 +22,10 @@
 
 ✅ - enter a domain and see SPF / dkim / dmarc records
 - connect google smtp accounts
+   <sub>Mail landing in spam from a self-hosted relay? Diagnose the transport
+   layer in 30s with [`npx smtp-warmer test --host smtp.example.com --port 587 --user me@example.com`](https://github.com/pypesdev/smtp-warmer)
+   — TLS handshake, AUTH+RCPT sandbox (no mail sent), DNSBL reputation,
+   reverse-DNS alignment. Zero deps, zero API keys, composite 0–10 score.</sub>
 - upload a csv of contacts
 - Create a single-step email sequence with basic personalization ({first_name}).
 - Send the emails (with a strict, safe sending limit).
