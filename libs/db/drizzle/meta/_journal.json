@@ -50,6 +50,13 @@
       "when": 1765079266033,
       "tag": "0006_ambitious_ezekiel_stane",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1777758682271,
+      "tag": "0007_rare_vector",
+      "breakpoints": true
     }
   ]
 }
