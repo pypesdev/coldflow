@@ -18,3 +18,4 @@ export * from "./queries/emailCampaign";
 export * from "./queries/emailEvent";
 export * from "./queries/emailTemplate";
 export * from "./queries/emailUnsubscribe";
+export * from "./queries/replyFollowup";

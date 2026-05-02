@@ -366,6 +366,49 @@ export const emailUnsubscribe = pgTable(
   ]
 );
 
+// Reply Follow-up enums + table
+// Tracks scheduled follow-up sends for prospects who replied (with question/pricing intent)
+// then went silent. README differentiator: "this is where the follow up actually decides the deal".
+export const replyFollowupStatusEnum = pgEnum("reply_followup_status", ["scheduled", "sent", "cancelled"]);
+
+export const replyFollowup = pgTable(
+  "reply_followup",
+  {
+    id: text("id").primaryKey(),
+    // Sequence in the README maps to "campaign" in the current schema.
+    sequenceId: text("sequence_id")
+      .notNull()
+      .references(() => emailCampaign.id, { onDelete: "cascade" }),
+    // Contact identity within a sequence is the original outbound email_queue row
+    // (carries recipient_email + recipient_name + email account context).
+    contactId: text("contact_id")
+      .notNull()
+      .references(() => emailQueue.id, { onDelete: "cascade" }),
+    recipientEmail: text("recipient_email").notNull(),
+    lastReplyAt: timestamp("last_reply_at").notNull(),
+    lastReplyExcerpt: text("last_reply_excerpt"),
+    scheduledSendAt: timestamp("scheduled_send_at").notNull(),
+    status: replyFollowupStatusEnum("status").notNull().default("scheduled"),
+    templateId: text("template_id").references(() => emailTemplate.id, { onDelete: "set null" }),
+    // Queue row created when the follow-up is dispatched (null until sent).
+    sentQueueId: text("sent_queue_id").references(() => emailQueue.id, { onDelete: "set null" }),
+    cancelReason: text("cancel_reason"),
+    sentAt: timestamp("sent_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("reply_followup_sequenceId_idx").on(table.sequenceId),
+    index("reply_followup_contactId_idx").on(table.contactId),
+    index("reply_followup_status_idx").on(table.status),
+    index("reply_followup_scheduledSendAt_idx").on(table.scheduledSendAt),
+    index("reply_followup_status_scheduledSendAt_idx").on(table.status, table.scheduledSendAt),
+  ]
+);
+
 // All Relations (defined after all tables)
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
@@ -466,6 +509,27 @@ export const emailUnsubscribeRelations = relations(emailUnsubscribe, ({ one }) =
   }),
 }));
 
+export const replyFollowupRelations = relations(replyFollowup, ({ one }) => ({
+  campaign: one(emailCampaign, {
+    fields: [replyFollowup.sequenceId],
+    references: [emailCampaign.id],
+  }),
+  contact: one(emailQueue, {
+    fields: [replyFollowup.contactId],
+    references: [emailQueue.id],
+    relationName: "replyFollowupContact",
+  }),
+  sentQueue: one(emailQueue, {
+    fields: [replyFollowup.sentQueueId],
+    references: [emailQueue.id],
+    relationName: "replyFollowupSentQueue",
+  }),
+  template: one(emailTemplate, {
+    fields: [replyFollowup.templateId],
+    references: [emailTemplate.id],
+  }),
+}));
+
 // Type exports for email system
 export type EmailAccount = typeof emailAccount.$inferSelect;
 export type InsertEmailAccount = typeof emailAccount.$inferInsert;
@@ -479,4 +543,6 @@ export type EmailTemplate = typeof emailTemplate.$inferSelect;
 export type InsertEmailTemplate = typeof emailTemplate.$inferInsert;
 export type EmailUnsubscribe = typeof emailUnsubscribe.$inferSelect;
 export type InsertEmailUnsubscribe = typeof emailUnsubscribe.$inferInsert;
+export type ReplyFollowup = typeof replyFollowup.$inferSelect;
+export type InsertReplyFollowup = typeof replyFollowup.$inferInsert;
 

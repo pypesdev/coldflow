@@ -26,6 +26,10 @@
 - Create a single-step email sequence with basic personalization ({first_name}).
 - Send the emails (with a strict, safe sending limit).
 - See a basic dashboard showing "sent" and "replied."
+- Silent-reply follow-up: when a prospect replies asking for pricing/details
+  (or any question) and then goes silent, automatically schedule a short
+  follow-up 3 days later. The follow-up cancels itself if the prospect
+  replies again before it sends. See **Pending follow-ups** on the dashboard.
 
 
 
