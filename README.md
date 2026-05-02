@@ -31,7 +31,7 @@
 
 # Move the needle TO-DO list:
 
-- [ ] Templates for popular email needs i.e "onboarding for SaaS"
+- [x] Templates for popular email needs i.e "onboarding for SaaS" — see `/templates`
 - [ ] Integration with GHL / N8N
 
 # Content TO-DO list:
