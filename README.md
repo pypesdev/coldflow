@@ -56,9 +56,16 @@ before running the same commands.
 
 
 
+# Email templates:
+
+A curated, production-tested template pack lives in
+[`templates/`](templates/) — sales, recruiting, partnership, warm-intro,
+and follow-up. Each is plaintext, under ~120 words, with a single CTA and
+deliverability notes. See [`templates/README.md`](templates/README.md) for
+how to load one into a campaign.
+
 # Move the needle TO-DO list:
 
-- [x] Templates for popular email needs i.e "onboarding for SaaS" — see `/templates`
 - [ ] Integration with GHL / N8N
 
 # Content TO-DO list:
