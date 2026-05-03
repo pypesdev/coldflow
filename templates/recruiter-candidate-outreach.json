@@ -1,0 +1,28 @@
+{
+  "id": "recruiter-candidate-outreach",
+  "name": "Recruiter to passive engineering candidate",
+  "icp": "Senior or staff engineer who is not actively job-searching",
+  "purpose": "Get a 20-minute exploratory call on the calendar",
+  "subjectLines": [
+    "{{specificObservation}} — quick question",
+    "{{roleTitle}} role at {{company}} — worth a look?",
+    "Not the usual recruiter email"
+  ],
+  "body": "Hi {{firstName}},\n\nFair warning: this is a recruiter email. I'll keep it short.\n\nI saw {{specificObservation}} and your background in {{technicalArea}} lined up almost exactly with what {{company}} is hiring for. The role is {{roleTitle}}, reporting to {{managerName}} ({{managerBackground}}). Comp is {{compRange}}, fully remote, {{additionalDetail}}.\n\nThe interesting parts, if you're curious: {{interestingPart1}} and {{interestingPart2}}.\n\nI know you're probably happy where you are — most of the people I want to talk to are. If even 10% of the above sounds interesting, I'm happy to send a 1-page write-up so you can decide without a call. If not, I won't follow up.\n\nWorth a look?\n\n{{senderFirstName}}",
+  "variables": [
+    {"key": "firstName", "required": true},
+    {"key": "specificObservation", "required": true, "note": "Something from their GitHub, a talk, a blog post. Not 'I saw your impressive profile.'"},
+    {"key": "company", "required": true},
+    {"key": "technicalArea", "required": true, "note": "The narrow area of overlap. e.g. 'distributed systems on Go', 'frontend perf at scale'."},
+    {"key": "roleTitle", "required": true},
+    {"key": "managerName", "required": true},
+    {"key": "managerBackground", "required": true, "note": "One line about who the manager is. e.g. 'ex-Stripe payments lead'. Candidates care about who they'll work for."},
+    {"key": "compRange", "required": true, "note": "Be transparent. e.g. '$280–340k base + 0.1–0.3% equity'. Vague comp ranges signal vague companies."},
+    {"key": "additionalDetail", "required": false, "note": "e.g. 'pre-IPO', 'post-Series C', 'profitable, no investor pressure'."},
+    {"key": "interestingPart1", "required": true, "note": "An actual technical or business hook. e.g. 'rebuilding the indexing pipeline from scratch.'"},
+    {"key": "interestingPart2", "required": true},
+    {"key": "senderFirstName", "required": true}
+  ],
+  "notes": "Senior engineers archive 95% of recruiter mail in <3 seconds. The only reason this one survives is the comp range, the manager name, and a real technical hook. If you can't share comp publicly, this template won't work — use a different approach. The 'I won't follow up' promise is a real commitment; don't bait-and-switch.",
+  "license": "MIT"
+}

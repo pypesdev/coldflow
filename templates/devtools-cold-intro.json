@@ -1,0 +1,25 @@
+{
+  "id": "devtools-cold-intro",
+  "name": "Devtools cold intro",
+  "icp": "Engineering manager / staff engineer at series A–C startups",
+  "purpose": "Book a 15-min product demo",
+  "subjectLines": [
+    "{{specificObservation}} — quick question",
+    "How {{company}} handles {{painPoint}}",
+    "15 min on {{painPoint}} at {{company}}?"
+  ],
+  "body": "Hi {{firstName}},\n\nI saw {{specificObservation}} — that resonated because most teams I talk to are dealing with {{painPoint}} around the same growth stage.\n\nI'm building {{productName}}. It's a {{oneLineDescription}}. Engineering teams at {{customerExampleA}} and {{customerExampleB}} use it to cut {{painPoint}} cycles roughly in half.\n\nNot trying to pitch a platform. If it's relevant, I can share a 5-minute Loom of how a team your size set it up — no demo call needed. If you'd rather just try it, the docs are public and there's a free tier with no card.\n\nWorth a look?\n\n{{senderFirstName}}",
+  "variables": [
+    {"key": "firstName", "required": true},
+    {"key": "company", "required": true},
+    {"key": "specificObservation", "required": true, "note": "Something concrete: a recent post, a job listing, a talk, a repo. Avoid 'I saw your company is growing fast.'"},
+    {"key": "painPoint", "required": true, "note": "The narrow problem your product solves, in their words. e.g. 'flaky CI', 'slow PR reviews'."},
+    {"key": "productName", "required": true},
+    {"key": "oneLineDescription", "required": true, "note": "One sentence, no jargon. e.g. 'CI cache layer that cuts test times by skipping unchanged files.'"},
+    {"key": "customerExampleA", "required": false, "note": "A recognizable customer name if you have permission to share."},
+    {"key": "customerExampleB", "required": false},
+    {"key": "senderFirstName", "required": true}
+  ],
+  "notes": "Works because it leads with a specific observation, names the pain in their language, and removes the friction of a demo call by offering a Loom. Skip the customer logos line if you don't have permission to use names. The free-tier mention only works if you actually have a free tier; otherwise drop that sentence.",
+  "license": "MIT"
+}

@@ -1,0 +1,29 @@
+{
+  "id": "agency-services-pitch",
+  "name": "Agency reaching out to founders",
+  "icp": "Founder or marketing lead at a seed–series B startup",
+  "purpose": "Open a conversation about a paid engagement",
+  "subjectLines": [
+    "{{specificObservation}} — one idea",
+    "{{company}}'s {{channelOrChannel}} — quick thought",
+    "Not a pitch, just one observation about {{company}}"
+  ],
+  "body": "Hi {{firstName}},\n\n{{specificObservation}}. Spent ten minutes looking through {{company}}'s {{channelOrChannel}} this morning and one thing jumped out: {{specificFinding}}.\n\nWe run a small {{agencyType}} agency — five people, ex-{{founderBackground}}. Most of our clients are at the same stage as {{company}}. Recent example: helped {{customerExampleA}} take {{metric}} from {{beforeMetric}} to {{afterMetric}} over {{timeframe}}.\n\nNo deck, no discovery call upfront. If it's useful, I'll send a free 2-page write-up of what I'd actually change about {{specificFinding}}. If you want to talk after that, great. If not, no follow-up.\n\nFair?\n\n{{senderFirstName}}",
+  "variables": [
+    {"key": "firstName", "required": true},
+    {"key": "company", "required": true},
+    {"key": "specificObservation", "required": true, "note": "Open with something genuine — a recent launch, a hiring move, a product decision."},
+    {"key": "channelOrChannel", "required": true, "note": "The actual channel you reviewed. e.g. 'landing page', 'paid search ads', 'cold email sequence'."},
+    {"key": "specificFinding", "required": true, "note": "One concrete observation. Not 'your funnel could be tighter.' Try 'your pricing page hides the ICP-specific copy below the fold.'"},
+    {"key": "agencyType", "required": true, "note": "e.g. 'growth', 'content', 'paid acquisition'."},
+    {"key": "founderBackground", "required": false, "note": "Where the team came from. e.g. 'Stripe + HubSpot'. Skip if not credible."},
+    {"key": "customerExampleA", "required": false},
+    {"key": "metric", "required": false},
+    {"key": "beforeMetric", "required": false},
+    {"key": "afterMetric", "required": false},
+    {"key": "timeframe", "required": false},
+    {"key": "senderFirstName", "required": true}
+  ],
+  "notes": "Founders get pitched constantly by agencies and the bar is high. The differentiator is offering free, specific work upfront — the 2-page write-up. Only use this if you'll actually deliver one. The 'no follow-up' line is a contract; honor it. If you can't fill in customerExampleA truthfully, delete that sentence and lean harder on the specific finding.",
+  "license": "MIT"
+}

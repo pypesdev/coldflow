@@ -1,0 +1,26 @@
+{
+  "id": "partnership-pitch",
+  "name": "Co-marketing or integration partnership pitch",
+  "icp": "Partnerships lead, head of marketing, or founder at an adjacent product",
+  "purpose": "Open a conversation about a co-marketing or integration partnership",
+  "subjectLines": [
+    "{{yourCompany}} + {{theirCompany}} — partnership idea",
+    "Quick partnership idea for {{theirCompany}}",
+    "Customers asking about {{theirCompany}} on our side"
+  ],
+  "body": "Hi {{firstName}},\n\n{{specificObservation}}. We've had a handful of customers ask if we integrate with {{theirCompany}} — enough that I thought I'd reach out directly.\n\nFor context: {{yourCompany}} is {{oneLineDescription}}. Our overlap is {{overlapDescription}} — about {{overlapEstimate}} of our customer base also uses {{theirCompany}} or something like it.\n\nTwo concrete things I'd be interested in exploring, in order of effort:\n\n1. {{lowEffortIdea}} — could ship in a week.\n2. {{higherEffortIdea}} — bigger lift, but probably the more interesting one for both sides.\n\nNo deck, no contract — just a 25-min call to see if any of this is worth pursuing. Worst case, you get a sense of what our customers are asking for.\n\nWho's the right person to talk to if it's not you?\n\n{{senderFirstName}}",
+  "variables": [
+    {"key": "firstName", "required": true},
+    {"key": "yourCompany", "required": true},
+    {"key": "theirCompany", "required": true},
+    {"key": "specificObservation", "required": true, "note": "Open with a real signal. e.g. 'Saw your launch on Product Hunt last week.'"},
+    {"key": "oneLineDescription", "required": true, "note": "What you do, in one sentence, no marketing language."},
+    {"key": "overlapDescription", "required": true, "note": "Where the customer bases meet. e.g. 'mid-market SaaS teams running outbound sales.'"},
+    {"key": "overlapEstimate", "required": false, "note": "A number you can defend. e.g. '40%'. If you don't actually know, drop this sentence."},
+    {"key": "lowEffortIdea", "required": true, "note": "Something concrete that takes <1 week. e.g. 'a joint webinar' or 'a product comparison page that cross-links.'"},
+    {"key": "higherEffortIdea", "required": true, "note": "Something concrete that takes 1–3 months. e.g. 'a native integration that lets our users export segments to your tool.'"},
+    {"key": "senderFirstName", "required": true}
+  ],
+  "notes": "Partnership pitches die in inboxes when they're vague about what's being proposed. The two-tier ask (low-effort + higher-effort) gives the recipient a way to say yes to something small. The 'who's the right person' close is intentional — partnerships people often forward these.",
+  "license": "MIT"
+}

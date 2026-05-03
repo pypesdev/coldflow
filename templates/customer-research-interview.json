@@ -1,0 +1,24 @@
+{
+  "id": "customer-research-interview",
+  "name": "Customer research / discovery interview ask",
+  "icp": "Person in your target ICP — could be a current user, a churned user, or a non-user who fits the profile",
+  "purpose": "Book a 20-minute discovery call",
+  "subjectLines": [
+    "20 minutes on {{topicArea}}?",
+    "Quick research request — {{topicArea}}",
+    "Picking your brain on {{topicArea}}"
+  ],
+  "body": "Hi {{firstName}},\n\nShort one. We're doing customer research at {{yourCompany}} on how {{icpDescription}} actually handle {{topicArea}} day-to-day. You came up because of {{specificReason}}.\n\nI'm not selling anything on this call. I'm trying to understand:\n- How you currently handle {{topicArea}}\n- Where the process breaks or feels heavy\n- What 'good' would look like for you\n\n20 minutes, video off if you'd rather. Happy to share what we learn from the full set of interviews — most people we talk to find the cross-cut more useful than their individual call.\n\nAs a thank-you, {{thankYouOffer}}.\n\nIf you're up for it, here's my calendar: {{calendarLink}}. Or just reply with two times that work and I'll send an invite.\n\n{{senderFirstName}}",
+  "variables": [
+    {"key": "firstName", "required": true},
+    {"key": "yourCompany", "required": true},
+    {"key": "icpDescription", "required": true, "note": "How you'd describe their role/situation. e.g. 'engineering managers at series A startups'."},
+    {"key": "topicArea", "required": true, "note": "The narrow topic. e.g. 'sprint planning', 'incident response', 'pipeline forecasting'."},
+    {"key": "specificReason", "required": true, "note": "Why this person specifically. e.g. 'a referral from {{referrerName}}' or 'your recent post on X.'"},
+    {"key": "thankYouOffer", "required": false, "note": "e.g. 'a $50 Amazon gift card', 'a copy of the full research summary', 'a free year of {{productName}}.' Drop the line if you don't have one."},
+    {"key": "calendarLink", "required": true},
+    {"key": "senderFirstName", "required": true}
+  ],
+  "notes": "The single biggest mistake in research outreach is making it sound like a sales call. Be explicit that it isn't. The promise to share what you learn is the most underrated incentive — it works better than gift cards on senior people. The bullet list of what you'll ask is reassuring; vague 'pick your brain' asks get archived.",
+  "license": "MIT"
+}

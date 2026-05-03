@@ -1,0 +1,28 @@
+{
+  "id": "b2b-saas-cold-intro",
+  "name": "B2B SaaS cold intro to ops/RevOps",
+  "icp": "Head of RevOps, Sales Ops, or BizOps at a 50–500-person B2B SaaS",
+  "purpose": "Land a 20-min call to walk through the pain and see if the product fits",
+  "subjectLines": [
+    "{{company}} + {{painPoint}}",
+    "Quick one for the {{company}} ops team",
+    "Saw the {{specificObservation}} — curious how it's going"
+  ],
+  "body": "Hi {{firstName}},\n\nNoticed {{specificObservation}}. Usually when a team gets to that stage, {{painPoint}} starts eating an unreasonable amount of the ops team's week.\n\nWe built {{productName}} to fix that one specific thing. {{customerExampleA}} cut their {{metric}} from {{beforeMetric}} to {{afterMetric}} in {{timeframe}}, with no extra headcount.\n\nNot trying to replace your stack. It plugs into {{integrationStack}} and runs alongside what you already have.\n\nIf the timing's right, I can show you the {{customerExampleA}} setup in 20 minutes — happy to send the recording instead if a live call is too much.\n\nWorth a conversation?\n\n{{senderFirstName}}",
+  "variables": [
+    {"key": "firstName", "required": true},
+    {"key": "company", "required": true},
+    {"key": "specificObservation", "required": true, "note": "A signal: hiring a RevOps role, recent funding, a podcast appearance, a tool migration. Avoid generic 'congrats on the growth.'"},
+    {"key": "painPoint", "required": true, "note": "The pain in their language. e.g. 'lead routing latency', 'pipeline hygiene', 'attribution gaps'."},
+    {"key": "productName", "required": true},
+    {"key": "customerExampleA", "required": false, "note": "Use only if you have permission. Otherwise drop the case-study sentence and rewrite around the product."},
+    {"key": "metric", "required": false, "note": "The metric that moved. e.g. 'lead-to-meeting conversion', 'time-to-first-touch'."},
+    {"key": "beforeMetric", "required": false},
+    {"key": "afterMetric", "required": false},
+    {"key": "timeframe", "required": false},
+    {"key": "integrationStack", "required": true, "note": "The 1–2 tools they almost certainly already use. e.g. 'Salesforce + Outreach'."},
+    {"key": "senderFirstName", "required": true}
+  ],
+  "notes": "RevOps people are skeptical of cold email by trade — they read these for a living. The win here is being concrete: name the pain, name the metric, name the tools you integrate with, and offer a recording instead of a call. Drop the case-study paragraph entirely if you can't substantiate it; a vague claim is worse than no claim.",
+  "license": "MIT"
+}

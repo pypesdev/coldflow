@@ -1,0 +1,23 @@
+{
+  "id": "lapsed-lead-revive",
+  "name": "Re-engaging a prospect who went silent 30+ days ago",
+  "icp": "A prospect who replied at least once and then went quiet 30+ days ago",
+  "purpose": "Re-open the conversation without sounding desperate",
+  "subjectLines": [
+    "Should I close the loop on this?",
+    "{{painPoint}} — still on your radar?",
+    "Quick check-in, {{firstName}}"
+  ],
+  "body": "Hi {{firstName}},\n\nLast time we talked you mentioned {{quotedPainOrContext}}. I assumed it got deprioritized — totally understand, things shift.\n\nTwo reasons I'm following up now:\n\n1. {{newReason}} — felt relevant given what you said.\n2. I'd rather close the loop than leave it hanging. If this isn't a {{currentQuarter}} priority, just tell me and I'll stop following up.\n\nIf it is back on the radar, the change since we last talked: {{productOrCompanyUpdate}}.\n\nWhich is it — paused, dead, or still interesting?\n\n{{senderFirstName}}",
+  "variables": [
+    {"key": "firstName", "required": true},
+    {"key": "painPoint", "required": false, "note": "Used in one of the subject lines only. The pain in their language from the original conversation. e.g. 'lead routing latency'. Pick a different subject if you don't have one."},
+    {"key": "quotedPainOrContext", "required": true, "note": "Quote them as closely as you can. e.g. 'you wanted to revisit after the Q1 board meeting' or 'you mentioned your team was buried in a migration.' Specificity proves you remember the conversation."},
+    {"key": "newReason", "required": true, "note": "A genuine new reason. e.g. 'we just shipped the Salesforce integration you asked about', 'we cut pricing for teams under 50.' If there's no new reason, this template doesn't work — wait until there is one."},
+    {"key": "currentQuarter", "required": true, "note": "e.g. 'Q2', 'this quarter', 'before the half'."},
+    {"key": "productOrCompanyUpdate", "required": false, "note": "Optional second hook. e.g. 'we hired a CS lead from notableCompany.' Skip if redundant with newReason."},
+    {"key": "senderFirstName", "required": true}
+  ],
+  "notes": "The 'paused, dead, or still interesting?' close is the workhorse of this template — it gives the prospect three legitimate options instead of guilting them into a yes. The quoted pain is what makes it land; if you can't remember what they said, go read the thread before sending. Don't send this template more than once per lapsed lead — if they don't respond, mark them dead and move on.",
+  "license": "MIT"
+}

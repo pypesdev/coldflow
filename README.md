@@ -41,6 +41,79 @@
 
 
 
+# Templates
+
+Starter cold-email templates live in [`/templates`](./templates). Each file is
+a single ICP × purpose combination — pick the closest match, swap the variables,
+adapt the body in your own voice. Bodies are 80–140 words, plain text, no
+buzzword soup.
+
+The current set:
+
+| File | ICP | Purpose |
+| --- | --- | --- |
+| `devtools-cold-intro.json` | Engineering manager / staff engineer | Book a 15-min product demo |
+| `b2b-saas-cold-intro.json` | Head of RevOps / Sales Ops | Land a 20-min discovery call |
+| `agency-services-pitch.json` | Founder / marketing lead | Open a paid-engagement conversation |
+| `recruiter-candidate-outreach.json` | Senior / staff engineer | Book an exploratory call |
+| `fundraising-warm-intro.json` | Friend / advisor (forwardable to investor) | Get a warm intro to a specific VC |
+| `partnership-pitch.json` | Partnerships lead at adjacent product | Explore co-marketing or integration |
+| `customer-research-interview.json` | Anyone in your ICP | Book a 20-min discovery interview |
+| `lapsed-lead-revive.json` | Prospect silent 30+ days | Re-open the conversation |
+
+## Template JSON shape
+
+```json
+{
+  "id": "devtools-cold-intro",
+  "name": "Devtools cold intro",
+  "icp": "Engineering manager / staff engineer at series A–C startups",
+  "purpose": "Book a 15-min product demo",
+  "subjectLines": ["...", "..."],
+  "body": "Hi {{firstName}}, ...",
+  "variables": [
+    {"key": "firstName", "required": true},
+    {"key": "company", "required": true},
+    {"key": "specificObservation", "required": false, "note": "Something specific you noticed about their product or recent post."}
+  ],
+  "notes": "Why this template works, when to use it, what to swap.",
+  "license": "MIT"
+}
+```
+
+Fields:
+
+- `id` — kebab-case identifier; matches the filename.
+- `name` — human-readable label for pickers.
+- `icp` — who this is aimed at.
+- `purpose` — the single outcome the email is trying to produce.
+- `subjectLines` — 2–3 variants. Test before scaling.
+- `body` — plain text, `{{var}}` placeholders, no HTML.
+- `variables` — every placeholder used in `subjectLines` or `body`. `required: true` means the email shouldn't go without it; `required: false` means it's worth using if you have it. Use the optional `note` field to coach senders on what makes a good value.
+- `notes` — when to use, when not to, what tends to break.
+- `license` — usage license. All starters ship as MIT.
+
+## How to use a template
+
+Today, templates are content-only. Pick one, copy the `body` and one of the
+`subjectLines` into the compose UI, and substitute your variables by hand.
+
+Wiring `templates/` directly into the compose UI as a picker is a follow-up —
+see the parent plan in HIR-105, or open an issue if you want it sooner.
+
+## Contributing a template
+
+PRs welcome. Keep new templates aligned with the conventions:
+
+- One ICP × purpose per file.
+- 80–140 word body, plain text, no jargon.
+- 2–3 subject line variants.
+- Document every variable, including a `note` for non-obvious ones.
+- `notes` should explain *why* the template works and what to watch out for.
+- All starters in this repo are MIT-licensed.
+
+
+
 # Move the needle TO-DO list:
 
 - [x] Templates for popular email needs i.e "onboarding for SaaS" — see `/templates`

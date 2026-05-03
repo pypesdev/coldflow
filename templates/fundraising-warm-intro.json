@@ -1,0 +1,31 @@
+{
+  "id": "fundraising-warm-intro",
+  "name": "Founder asking for an intro to an investor",
+  "icp": "Friend, advisor, or prior coworker who knows the target investor personally",
+  "purpose": "Get a forwardable intro to a specific investor",
+  "subjectLines": [
+    "Quick intro ask — {{investorName}}",
+    "Would you mind forwarding this to {{investorFirstName}}?",
+    "{{companyName}} fundraise — small ask"
+  ],
+  "body": "Hey {{firstName}},\n\nQuick ask. We're raising a {{roundType}} for {{companyName}} and {{investorName}} at {{investorFirm}} is at the top of our list — they led {{relevantPortfolioCo}}, which is the closest analogue to what we're building.\n\nWould you be open to forwarding the note below? Totally fine to say no or to add caveats.\n\n---\n\nHi {{investorFirstName}},\n\n{{introducerFirstName}} suggested I reach out. I'm {{senderFirstName}}, founder of {{companyName}}. We're building {{oneLineDescription}}.\n\nQuick traction snapshot: {{tractionMetric1}} and {{tractionMetric2}}. We're raising a {{roundSize}} {{roundType}} to {{useOfFunds}}.\n\nGiven your work with {{relevantPortfolioCo}}, I think you'd see the angle quickly. Open to a 20-min call in the next two weeks?\n\n{{senderFirstName}}\n{{deckLinkOrNote}}\n\n---\n\nThanks for considering it, {{firstName}} — and totally no pressure either way.\n\n{{senderFirstName}}",
+  "variables": [
+    {"key": "firstName", "required": true, "note": "The introducer's first name."},
+    {"key": "companyName", "required": true},
+    {"key": "roundType", "required": true, "note": "e.g. 'pre-seed', 'seed', 'Series A bridge'."},
+    {"key": "roundSize", "required": true, "note": "e.g. '$2M', '$8M'."},
+    {"key": "investorName", "required": true, "note": "Full name."},
+    {"key": "investorFirstName", "required": true},
+    {"key": "investorFirm", "required": true},
+    {"key": "relevantPortfolioCo", "required": true, "note": "A specific portfolio company that maps to your space. Be honest about the analogue."},
+    {"key": "introducerFirstName", "required": true, "note": "Same as firstName, repeated for the forwarded note."},
+    {"key": "senderFirstName", "required": true},
+    {"key": "oneLineDescription", "required": true, "note": "Plain English. No 'AI-powered platform.' One sentence."},
+    {"key": "tractionMetric1", "required": true, "note": "Real numbers. e.g. '$22k MRR, 18% MoM growth'."},
+    {"key": "tractionMetric2", "required": true},
+    {"key": "useOfFunds", "required": true, "note": "What the money buys. e.g. 'extend runway 18 months and hire two engineers'."},
+    {"key": "deckLinkOrNote", "required": false, "note": "Either a link to a 5-slide deck, or 'happy to send the deck after the call.'"}
+  ],
+  "notes": "The forwardable note is the whole point — it has to stand on its own without the original wrapper. Investors evaluate the forwarded note in 30 seconds. The traction numbers should be specific and recent (last 30 days). Always give the introducer an out — don't make them feel obligated. If the investor doesn't actually map to your space, this template is a waste of a warm contact.",
+  "license": "MIT"
+}
