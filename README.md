@@ -18,6 +18,21 @@
 - `pnpm dev`
 - navigate to `localhost:3000`
 
+# CI
+
+Every pull request and every push to `main` runs `.github/workflows/ci.yml`,
+which fails the build if any of the following fail:
+
+- `pnpm install --frozen-lockfile`
+- `pnpm exec tsc --noEmit` (typecheck — there is no `typecheck` script yet)
+- `pnpm lint`
+- `pnpm test:int`
+
+`test:int` boots Payload, so CI provisions a Postgres 16 service container and
+sets `DATABASE_URL_PAYLOAD` + `PAYLOAD_SECRET` for the run. To reproduce the CI
+job locally, mirror the env from the workflow and `docker compose up -d db`
+before running the same commands.
+
 
 # MVP features:
 

@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  checks:
+    name: typecheck · lint · test:int
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: coldflow
+          POSTGRES_PASSWORD: coldflow
+          POSTGRES_DB: coldflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U coldflow -d coldflow"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      # Matches docker-compose.yaml + .env.example for the payload DB.
+      DATABASE_URL: postgres://coldflow:coldflow@localhost:5432/coldflow
+      DATABASE_URL_PAYLOAD: postgres://coldflow:coldflow@localhost:5432/payload
+      # Test-only secret. Payload refuses to boot without one.
+      PAYLOAD_SECRET: ci-test-secret
+      NEXT_PUBLIC_SERVER_URL: http://localhost:3000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          # Matches the Node version pinned in Dockerfile.
+          node-version: 22.17.0
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create payload database
+        run: |
+          PGPASSWORD=coldflow psql -h localhost -U coldflow -d coldflow \
+            -c "CREATE DATABASE payload;"
+
+      - name: Typecheck
+        run: pnpm exec tsc --noEmit
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Integration tests
+        run: pnpm test:int
