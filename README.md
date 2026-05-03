@@ -88,14 +88,3 @@ asked a question. they said yes send details. they requested pricing. whatever
 it is. and then sometimes they go silent for 3 or 4 days. sometimes even 7. this
 is where the follow up actually decides the deal. these are the follow ups that
 convert. not the cold ones.
-
-
-
-- do I need permitting to claim cost seg?
-- my business made negative money, do I need to pay taxes?
-- is there anything I need to get done by EOY
-- can I max out my HSA now?
-
-- schedule E = passive
-- schedule C = active
-- augusta rule
