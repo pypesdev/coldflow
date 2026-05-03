@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -34,6 +34,7 @@ type SubmitResult =
   | { kind: 'error'; message: string }
 
 function NewCampaignPageInner() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const [name, setName] = useState('')
   const [subject, setSubject] = useState('')
@@ -114,11 +115,15 @@ function NewCampaignPageInner() {
       if (!res.ok || !data?.success) {
         throw new Error(data?.error || `Request failed (${res.status})`)
       }
+      const campaignId = data.campaign?.id ?? ''
       setSubmit({
         kind: 'success',
-        campaignId: data.campaign?.id ?? '',
+        campaignId,
         queued: data.queuedEmails ?? parsed.recipients.length,
       })
+      if (campaignId) {
+        router.push(`/dashboard/campaigns/${campaignId}`)
+      }
     } catch (err) {
       setSubmit({
         kind: 'error',
