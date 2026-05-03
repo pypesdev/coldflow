@@ -49,6 +49,46 @@ and follow-up. Each is plaintext, under ~120 words, with a single CTA and
 deliverability notes. See [`templates/README.md`](templates/README.md) for
 how to load one into a campaign.
 
+# AI Personalization
+
+Templates give you a starting point. Personalization is what turns a
+starting point into a draft worth sending. Coldflow ships an opt-in helper
+endpoint that takes a contact and a template and returns a personalized
+variant — filling any remaining `{{vars}}` and adding 1–2 light touches
+that acknowledge the recipient's role and reference their company
+specifically.
+
+**UI:** open `/dashboard/campaigns/new`, pick a template, then click
+**Personalize with AI**. Provide a contact (name, company, role) and
+review the line-by-line diff before applying.
+
+**API:** `POST /api/personalize`
+
+```
+{
+  "template_id": "sales_founder_direct",
+  "contact": {
+    "name": "Alex Chen",
+    "company": "Acme Robotics",
+    "role": "VP of Engineering",
+    "product_name": "Coldflow",
+    "sender_name": "Jared"
+  }
+}
+```
+
+Any extra string fields on `contact` become optional context — variables
+like `{{product_name}}` are filled deterministically server-side before
+the LLM is asked to add personalization touches. The response includes
+`personalized_subject`, `personalized_body`, `used_variables`, and the
+SDK `usage` object so you can track spend. Authenticated callers are
+limited to one request every two seconds.
+
+**Setup:** add `ANTHROPIC_API_KEY=…` to your `.env` (see `.env.example`).
+Without a key the endpoint returns 503 and the UI shows a clean error.
+Default model is `claude-haiku-4-5-20251001`; override with
+`ANTHROPIC_PERSONALIZE_MODEL`.
+
 # Move the needle TO-DO list:
 
 - [ ] Integration with GHL / N8N
