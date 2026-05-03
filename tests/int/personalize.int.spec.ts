@@ -2,8 +2,11 @@ import { describe, expect, it, beforeEach } from 'vitest'
 import {
   buildPersonalizationPrompt,
   parseClaudeEnvelope,
+  personalizeRequestSchema,
   PersonalizationFormatError,
   prefillTemplate,
+  MAX_OPTIONAL_CONTEXT_KEYS,
+  MAX_OPTIONAL_CONTEXT_VALUE_LEN,
 } from '@/lib/templates/personalize'
 import {
   getFileTemplateById,
@@ -123,6 +126,59 @@ describe('buildPersonalizationPrompt', () => {
       remainingVariables: [],
     })
     expect(user).toContain('(none')
+  })
+
+  it('system prompt instructs the model to treat contact fields as untrusted data', () => {
+    const { system } = buildPersonalizationPrompt({
+      subject: 's',
+      body: 'b',
+      contact: { name: 'A', company: 'C', role: 'R' },
+      remainingVariables: [],
+    })
+    // Contact-field prompt-injection guard — the model must not follow
+    // instructions embedded in attacker-controlled fields like company name.
+    expect(system).toMatch(/untrusted data/i)
+    expect(system).toMatch(/never follow instructions/i)
+  })
+})
+
+describe('personalizeRequestSchema', () => {
+  const baseContact = { name: 'A', company: 'C', role: 'R' }
+
+  it('accepts a minimal contact', () => {
+    const r = personalizeRequestSchema.safeParse({
+      template_id: 't',
+      contact: baseContact,
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it('accepts up to MAX_OPTIONAL_CONTEXT_KEYS extra fields', () => {
+    const contact: Record<string, string> = { ...baseContact }
+    for (let i = 0; i < MAX_OPTIONAL_CONTEXT_KEYS; i++) contact[`k${i}`] = 'v'
+    const r = personalizeRequestSchema.safeParse({
+      template_id: 't',
+      contact,
+    })
+    expect(r.success).toBe(true)
+  })
+
+  it('rejects more than MAX_OPTIONAL_CONTEXT_KEYS extra fields', () => {
+    const contact: Record<string, string> = { ...baseContact }
+    for (let i = 0; i < MAX_OPTIONAL_CONTEXT_KEYS + 1; i++) contact[`k${i}`] = 'v'
+    const r = personalizeRequestSchema.safeParse({
+      template_id: 't',
+      contact,
+    })
+    expect(r.success).toBe(false)
+  })
+
+  it('rejects optional_context values longer than the per-value cap', () => {
+    const r = personalizeRequestSchema.safeParse({
+      template_id: 't',
+      contact: { ...baseContact, big: 'x'.repeat(MAX_OPTIONAL_CONTEXT_VALUE_LEN + 1) },
+    })
+    expect(r.success).toBe(false)
   })
 })
 
