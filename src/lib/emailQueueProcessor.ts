@@ -1,6 +1,7 @@
 import {
   getNextPendingEmails,
   updateQueueStatus,
+  rescheduleQueueEntry,
   incrementAttemptCount,
   createEmailEvent,
   incrementCampaignStat,
@@ -8,6 +9,7 @@ import {
   isEmailUnsubscribed,
 } from '@coldflow/db';
 import { sendEmail, hasAvailableQuota } from './gmailService';
+import { computeQuotaRescheduleAt } from './queueScheduling';
 import { nanoid } from 'nanoid';
 
 /**
@@ -84,20 +86,24 @@ export async function processEmailQueue(batchSize: number = 10): Promise<Process
         const hasQuota = await hasAvailableQuota(queueEntry.emailAccountId);
         if (!hasQuota) {
           const account = await getEmailAccountById(queueEntry.emailAccountId);
-          const quotaResetAt = account?.quotaResetAt ? new Date(account.quotaResetAt) : null;
+          const quotaResetAt = account?.quotaResetAt
+            ? new Date(account.quotaResetAt)
+            : null;
 
-          if (quotaResetAt && quotaResetAt > now) {
-            // Reschedule for quota reset time
-            await updateQueueStatus(
-              queueEntry.id,
-              'pending', // Keep as pending
-              null,
-              'Quota exceeded - rescheduled'
-            );
-            result.skipped++;
-            console.log(`Email ${queueEntry.id} skipped - quota exceeded, rescheduled for ${quotaResetAt}`);
-            continue;
-          }
+          // Always push the entry's `scheduledFor` forward — without that,
+          // `getNextPendingEmails` (which filters `scheduledFor <= now`)
+          // would re-pick this entry on every batch and we'd spin.
+          const nextAttempt = computeQuotaRescheduleAt(quotaResetAt, now);
+          await rescheduleQueueEntry(
+            queueEntry.id,
+            nextAttempt,
+            'Quota exceeded - rescheduled'
+          );
+          result.skipped++;
+          console.log(
+            `Email ${queueEntry.id} skipped - quota exceeded, rescheduled for ${nextAttempt.toISOString()}`
+          );
+          continue;
         }
 
         // Update status to processing

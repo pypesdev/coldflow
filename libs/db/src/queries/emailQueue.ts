@@ -84,6 +84,40 @@ export const updateQueueStatus = async (
 };
 
 /**
+ * Reschedule a pending queue entry for a future send time. Used by the queue
+ * processor when an account is over its daily quota — without bumping
+ * `scheduledFor`, the entry would be picked again on the next batch
+ * iteration and immediately re-skipped.
+ *
+ * Always keeps the entry in `pending` status (only the time and optional
+ * error message change). `attemptCount` is intentionally NOT incremented
+ * because no send was actually attempted.
+ */
+export const rescheduleQueueEntry = async (
+  id: string,
+  newScheduledFor: Date,
+  errorMessage?: string | null
+): Promise<EmailQueue | null> => {
+  const updateData: Record<string, unknown> = {
+    status: 'pending' as const,
+    scheduledFor: newScheduledFor,
+    updatedAt: new Date(),
+  };
+
+  if (errorMessage !== undefined) {
+    updateData.errorMessage = errorMessage;
+  }
+
+  const results = await db
+    .update(emailQueue)
+    .set(updateData)
+    .where(eq(emailQueue.id, id))
+    .returning();
+
+  return results[0] || null;
+};
+
+/**
  * Increment attempt count for a queue entry
  */
 export const incrementAttemptCount = async (id: string): Promise<EmailQueue | null> => {
