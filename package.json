@@ -24,6 +24,7 @@
     "db:studio": "pnpm --filter db db:studio"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.92.0",
     "@payloadcms/admin-bar": "3.64.0",
     "@payloadcms/db-postgres": "3.64.0",
     "@payloadcms/live-preview-react": "3.64.0",

@@ -6,6 +6,19 @@ import {
   triageReplyLLM,
 } from '@/lib/replyTriage'
 
+const { messagesCreate } = vi.hoisted(() => ({ messagesCreate: vi.fn() }))
+
+vi.mock('@anthropic-ai/sdk', () => {
+  const Anthropic = vi.fn(() => ({
+    messages: { create: messagesCreate },
+  }))
+  return { default: Anthropic }
+})
+
+const textResponse = (text: string) => ({
+  content: [{ type: 'text', text }],
+})
+
 describe('triageReplyHeuristic', () => {
   it('classifies the labeled cases.json set with >= 80% accuracy', () => {
     let correct = 0
@@ -48,32 +61,23 @@ describe('triageReplyHeuristic', () => {
 })
 
 describe('triageReplyLLM', () => {
-  const originalFetch = globalThis.fetch
   beforeEach(() => {
     delete process.env.ANTHROPIC_API_KEY
-  })
-  afterEach(() => {
-    globalThis.fetch = originalFetch
+    messagesCreate.mockReset()
   })
 
   it('returns null when no API key is configured', async () => {
     const result = await triageReplyLLM({ replyBody: 'price?' })
     expect(result).toBeNull()
+    expect(messagesCreate).not.toHaveBeenCalled()
   })
 
   it('parses a valid LLM response', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        content: [
-          {
-            type: 'text',
-            text: '{"intent":"interested","confidence":0.92,"suggested_followup":"Hi Pat, happy to share details."}',
-          },
-        ],
-      }),
-    })
-    globalThis.fetch = fetchMock as unknown as typeof fetch
+    messagesCreate.mockResolvedValue(
+      textResponse(
+        '{"intent":"interested","confidence":0.92,"suggested_followup":"Hi Pat, happy to share details."}'
+      )
+    )
 
     const result = await triageReplyLLM(
       { replyBody: 'price?' },
@@ -88,18 +92,11 @@ describe('triageReplyLLM', () => {
   })
 
   it('tolerates ```json fences in the LLM response', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        content: [
-          {
-            type: 'text',
-            text: '```json\n{"intent":"objection","confidence":0.7,"suggested_followup":"x"}\n```',
-          },
-        ],
-      }),
-    })
-    globalThis.fetch = fetchMock as unknown as typeof fetch
+    messagesCreate.mockResolvedValue(
+      textResponse(
+        '```json\n{"intent":"objection","confidence":0.7,"suggested_followup":"x"}\n```'
+      )
+    )
     const result = await triageReplyLLM(
       { replyBody: 'no thanks' },
       { apiKey: 'sk-test' }
@@ -108,11 +105,7 @@ describe('triageReplyLLM', () => {
   })
 
   it('returns null when the LLM returns garbage that cannot be parsed', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ content: [{ type: 'text', text: 'sorry, I cannot help' }] }),
-    })
-    globalThis.fetch = fetchMock as unknown as typeof fetch
+    messagesCreate.mockResolvedValue(textResponse('sorry, I cannot help'))
     const result = await triageReplyLLM(
       { replyBody: '...' },
       { apiKey: 'sk-test' }
@@ -120,13 +113,8 @@ describe('triageReplyLLM', () => {
     expect(result).toBeNull()
   })
 
-  it('returns null when the API returns non-200', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: false,
-      status: 500,
-      text: async () => 'server error',
-    })
-    globalThis.fetch = fetchMock as unknown as typeof fetch
+  it('returns null when the SDK throws', async () => {
+    messagesCreate.mockRejectedValue(new Error('500 server error'))
     const result = await triageReplyLLM(
       { replyBody: '...' },
       { apiKey: 'sk-test' }
@@ -135,18 +123,9 @@ describe('triageReplyLLM', () => {
   })
 
   it('rejects unknown intent values', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        content: [
-          {
-            type: 'text',
-            text: '{"intent":"happy","confidence":0.9,"suggested_followup":"x"}',
-          },
-        ],
-      }),
-    })
-    globalThis.fetch = fetchMock as unknown as typeof fetch
+    messagesCreate.mockResolvedValue(
+      textResponse('{"intent":"happy","confidence":0.9,"suggested_followup":"x"}')
+    )
     const result = await triageReplyLLM(
       { replyBody: '...' },
       { apiKey: 'sk-test' }
@@ -155,18 +134,9 @@ describe('triageReplyLLM', () => {
   })
 
   it('clamps confidence into [0, 1]', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        content: [
-          {
-            type: 'text',
-            text: '{"intent":"interested","confidence":1.5,"suggested_followup":"x"}',
-          },
-        ],
-      }),
-    })
-    globalThis.fetch = fetchMock as unknown as typeof fetch
+    messagesCreate.mockResolvedValue(
+      textResponse('{"intent":"interested","confidence":1.5,"suggested_followup":"x"}')
+    )
     const result = await triageReplyLLM(
       { replyBody: 'p' },
       { apiKey: 'sk-test' }
@@ -176,9 +146,10 @@ describe('triageReplyLLM', () => {
 })
 
 describe('triageReply (end-to-end)', () => {
-  const originalFetch = globalThis.fetch
+  beforeEach(() => {
+    messagesCreate.mockReset()
+  })
   afterEach(() => {
-    globalThis.fetch = originalFetch
     delete process.env.ANTHROPIC_API_KEY
   })
 
@@ -191,9 +162,7 @@ describe('triageReply (end-to-end)', () => {
 
   it('falls back to the heuristic when the LLM call fails', async () => {
     process.env.ANTHROPIC_API_KEY = 'sk-test'
-    globalThis.fetch = vi
-      .fn()
-      .mockRejectedValue(new Error('network down')) as unknown as typeof fetch
+    messagesCreate.mockRejectedValue(new Error('network down'))
     const result = await triageReply({ replyBody: 'send pricing please' })
     expect(result.source).toBe('heuristic')
     expect(result.intent).toBe('interested')
@@ -201,17 +170,11 @@ describe('triageReply (end-to-end)', () => {
 
   it('uses LLM result when available', async () => {
     process.env.ANTHROPIC_API_KEY = 'sk-test'
-    globalThis.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        content: [
-          {
-            type: 'text',
-            text: '{"intent":"not_now","confidence":0.66,"suggested_followup":"talk later"}',
-          },
-        ],
-      }),
-    }) as unknown as typeof fetch
+    messagesCreate.mockResolvedValue(
+      textResponse(
+        '{"intent":"not_now","confidence":0.66,"suggested_followup":"talk later"}'
+      )
+    )
     const result = await triageReply({ replyBody: 'busy this quarter' })
     expect(result.source).toBe('llm')
     expect(result.intent).toBe('not_now')
