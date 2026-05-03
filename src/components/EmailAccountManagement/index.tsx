@@ -284,7 +284,7 @@ export function EmailAccountModal({
             <DialogHeader>
               <DialogTitle>Connect Outlook Account</DialogTitle>
               <DialogDescription>
-                You'll be redirected to Microsoft to authorize access to your Outlook account
+                You&apos;ll be redirected to Microsoft to authorize access to your Outlook account
               </DialogDescription>
             </DialogHeader>
 

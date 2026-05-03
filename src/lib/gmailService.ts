@@ -120,11 +120,6 @@ export async function sendEmail(
         );
 
         accessToken = newTokens.accessToken;
-
-        // Update status to connected if it was in error
-        if (account.status === 'error') {
-          await updateEmailAccountStatus(emailAccountId, 'connected', null);
-        }
       } catch (error) {
         // Token refresh failed - mark account as error
         await updateEmailAccountStatus(

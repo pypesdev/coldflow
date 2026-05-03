@@ -3,10 +3,8 @@ import { requireAuth, AuthorizationError } from '@/lib/authorization';
 import {
   getEmailAccountById,
   deleteEmailAccount,
+  getPendingCountForEmailAccount,
 } from '@coldflow/db';
-import { sql } from 'drizzle-orm';
-import { db } from '@coldflow/db';
-import { emailQueue } from '@coldflow/db';
 
 /**
  * DELETE /api/email-accounts/[id]
@@ -43,12 +41,7 @@ export async function DELETE(
     }
 
     // Check if there are pending emails for this account
-    const pendingEmails = await db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(emailQueue)
-      .where(sql`${emailQueue.emailAccountId} = ${id} AND ${emailQueue.status} = 'pending'`);
-
-    const pendingCount = pendingEmails[0]?.count || 0;
+    const pendingCount = await getPendingCountForEmailAccount(id);
 
     if (pendingCount > 0) {
       return NextResponse.json(
