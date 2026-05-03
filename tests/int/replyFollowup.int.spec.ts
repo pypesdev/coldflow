@@ -160,33 +160,66 @@ describe('recordInboundReply', () => {
     expect(dbMock.createEmailEvent).toHaveBeenCalled()
   })
 
-  it('cancels existing scheduled followups when a new reply arrives (cancel-on-new-reply rule)', async () => {
+  it('short-circuits as duplicate_delivery when the replied event already exists for this trackingId', async () => {
     dbMock.getOriginalQueueEntry.mockResolvedValueOnce(queueEntry)
     dbMock.eventExistsForTracking.mockResolvedValueOnce(true)
-    dbMock.cancelScheduledFollowupsForContact.mockResolvedValueOnce(1)
-    dbMock.createReplyFollowup.mockResolvedValueOnce({
-      id: 'followup-2',
-      sequenceId: 'campaign-1',
-      contactId: 'queue-1',
-      status: 'scheduled',
-    })
 
     const result = await recordInboundReply({
       contactQueueId: 'queue-1',
       replyBody: 'Actually, can you clarify pricing once more?',
     })
 
-    expect(dbMock.cancelScheduledFollowupsForContact).toHaveBeenCalledWith(
-      'queue-1',
-      'superseded_by_new_reply'
-    )
-    expect(result.cancelledExistingCount).toBe(1)
-    // duplicate reply event suppressed
+    expect(result).toEqual({
+      followupCreated: false,
+      cancelledExistingCount: 0,
+      reason: 'duplicate_delivery',
+    })
+    // No event, no campaign-stat bump, no LLM triage, no reply row, no
+    // followup scheduling, no cancellation of an existing followup. Anything
+    // else here means we're double-processing a redelivered webhook.
     expect(dbMock.createEmailEvent).not.toHaveBeenCalled()
     expect(dbMock.incrementCampaignStat).not.toHaveBeenCalled()
-    // new heuristic-matching reply still schedules a fresh follow-up
+    expect(triageMock.triageReply).not.toHaveBeenCalled()
+    expect(dbMock.createReply).not.toHaveBeenCalled()
+    expect(dbMock.cancelScheduledFollowupsForContact).not.toHaveBeenCalled()
+    expect(dbMock.createReplyFollowup).not.toHaveBeenCalled()
+  })
+
+  it('dedupes triage + createReply across two webhook deliveries with the same trackingId', async () => {
+    // First delivery: original reply lands, full pipeline runs.
+    dbMock.getOriginalQueueEntry.mockResolvedValueOnce(queueEntry)
+    dbMock.eventExistsForTracking.mockResolvedValueOnce(false)
+    dbMock.cancelScheduledFollowupsForContact.mockResolvedValueOnce(0)
+    dbMock.createReplyFollowup.mockResolvedValueOnce({
+      id: 'followup-1',
+      sequenceId: 'campaign-1',
+      contactId: 'queue-1',
+      status: 'scheduled',
+    })
+
+    const first = await recordInboundReply({
+      contactQueueId: 'queue-1',
+      replyBody: 'Could you share pricing?',
+    })
+    expect(first.followupCreated).toBe(true)
+
+    // Second delivery (Pub/Sub redelivery): event already exists → short-circuit.
+    dbMock.getOriginalQueueEntry.mockResolvedValueOnce(queueEntry)
+    dbMock.eventExistsForTracking.mockResolvedValueOnce(true)
+
+    const second = await recordInboundReply({
+      contactQueueId: 'queue-1',
+      replyBody: 'Could you share pricing?',
+    })
+    expect(second.reason).toBe('duplicate_delivery')
+
+    // The expensive / user-visible side effects ran exactly once across both
+    // deliveries — proving dedup.
+    expect(dbMock.createEmailEvent).toHaveBeenCalledTimes(1)
+    expect(dbMock.createReply).toHaveBeenCalledTimes(1)
+    expect(triageMock.triageReply).toHaveBeenCalledTimes(1)
     expect(dbMock.createReplyFollowup).toHaveBeenCalledTimes(1)
-    expect(result.followupCreated).toBe(true)
+    expect(dbMock.incrementCampaignStat).toHaveBeenCalledTimes(1)
   })
 
   it('returns no_queue_entry when the original outbound row cannot be found', async () => {

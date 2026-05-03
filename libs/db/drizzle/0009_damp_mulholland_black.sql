@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "reply_contactId_eventId_unique" ON "reply" USING btree ("contact_id","event_id");
