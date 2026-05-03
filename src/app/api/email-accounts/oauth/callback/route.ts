@@ -5,6 +5,7 @@ import {
   getUserInfo,
 } from '@/lib/googleOAuth';
 import { encryptToken } from '@/lib/tokenEncryption';
+import { decodeOAuthState, type OAuthStateData } from '@/lib/oauthState';
 import {
   createEmailAccount,
   emailAccountExists,
@@ -43,21 +44,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Decode and verify state parameter
-    let stateData: {
-      userId: string;
-      subAgencyId: string | null;
-      timestamp: number;
-    };
-
+    // Decode and verify state parameter (CSRF + freshness)
+    let stateData: OAuthStateData;
     try {
-      stateData = JSON.parse(Buffer.from(state, 'base64').toString('utf8'));
-
-      // Verify state is not too old (prevent replay attacks)
-      const stateAge = Date.now() - stateData.timestamp;
-      if (stateAge > 10 * 60 * 1000) { // 10 minutes
-        throw new Error('State parameter expired');
-      }
+      stateData = decodeOAuthState(state);
     } catch (_error) {
       return NextResponse.redirect(
         new URL(

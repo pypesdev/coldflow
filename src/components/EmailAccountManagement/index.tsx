@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { Mail, Server } from 'lucide-react'
-import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -21,8 +20,6 @@ import type {
   EmailProvider,
   ConnectEmailAccountResponse,
 } from '@/types/email'
-
-const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''
 
 interface EmailAccountModalProps {
   open: boolean
@@ -76,39 +73,34 @@ export function EmailAccountModal({
     onOpenChange(false)
   }
 
-  const handleGmailSuccess = async (credentialResponse: any) => {
+  const handleGmailConnect = async () => {
     setSubmitting(true)
     setError(null)
 
     try {
-      console.log('credentialResponse', credentialResponse)
       const response = await fetch('/api/email-accounts/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          provider: 'gmail',
-          credential: credentialResponse.credential,
-        }),
+        body: JSON.stringify({ provider: 'gmail' }),
       })
 
       const data: ConnectEmailAccountResponse = await response.json()
 
-      if (!response.ok || !data.success) {
-        setError(data.error || 'Failed to connect Gmail account')
+      if (!response.ok || !data.success || !data.authUrl) {
+        setError(data.error || 'Failed to start Gmail connection')
         return
       }
 
-      onSuccess?.()
-      handleClose()
-    } catch (err) {
+      // Redirect the browser to Google's OAuth consent screen. When the user
+      // grants access, Google redirects back to /api/email-accounts/oauth/callback
+      // which exchanges the code for refresh + access tokens and stores the
+      // account in the database.
+      window.location.href = data.authUrl
+    } catch (_err) {
       setError('An error occurred while connecting Gmail account')
     } finally {
       setSubmitting(false)
     }
-  }
-
-  const handleGmailError = () => {
-    setError('Failed to authenticate with Google. Please try again.')
   }
 
   const handleOutlookConnect = async () => {
@@ -186,8 +178,7 @@ export function EmailAccountModal({
   }
 
   return (
-    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-[600px]">
           {!selectedProvider ? (
             <>
@@ -279,21 +270,12 @@ export function EmailAccountModal({
                 </div>
               </div>
 
-              <div className="flex flex-col items-center gap-4 py-4">
-                <GoogleOAuthProvider
-                  onSuccess={handleGmailSuccess}
-                  onError={handleGmailError}
-                  useOneTap={false}
-                  text="continue_with"
-                  shape="rectangular"
-                  size="large"
-                  theme="outline"
-                />
-              </div>
-
               <DialogFooter>
                 <Button variant="outline" onClick={handleBack} disabled={submitting}>
                   Back
+                </Button>
+                <Button onClick={handleGmailConnect} disabled={submitting}>
+                  {submitting ? 'Connecting...' : 'Connect Gmail'}
                 </Button>
               </DialogFooter>
             </>
@@ -461,6 +443,5 @@ export function EmailAccountModal({
         )}
       </DialogContent>
     </Dialog>
-    </GoogleOAuthProvider>
   )
 }
