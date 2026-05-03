@@ -1,5 +1,4 @@
 import { google } from 'googleapis';
-import { OAuth2Client } from 'google-auth-library';
 import {
   getEmailAccountById,
   updateEmailAccountTokens,
@@ -8,6 +7,8 @@ import {
 } from '@coldflow/db';
 import { decryptToken, encryptToken } from './tokenEncryption';
 import { refreshAccessToken, getOAuth2Client } from './googleOAuth';
+import { buildMimeMessage, toGmailRawString } from './mime';
+import { injectTracking } from './emailTracking';
 
 /**
  * Gmail API Service
@@ -33,75 +34,31 @@ interface SendEmailResult {
 }
 
 /**
- * Construct a MIME email message with HTML and plain text parts
+ * Construct a base64url-encoded RFC 2822 message ready for Gmail's
+ * `users.messages.send`. Tracking pixel + click rewrite happen in
+ * `emailTracking.ts`; header/body encoding happens in `mime.ts`.
  */
 function createMimeMessage(options: SendEmailOptions, fromEmail: string): string {
-  const boundary = '----=_Part_' + Date.now();
   const baseUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000';
 
-  // Inject tracking pixel into HTML body
-  let htmlBody = options.bodyHtml || '';
-  if (htmlBody && options.trackingId) {
-    const trackingPixel = `<img src="${baseUrl}/api/email-tracking/pixel/${options.trackingId}.png" width="1" height="1" alt="" style="display:none;" />`;
-    // Insert tracking pixel before closing body tag, or at the end if no body tag
-    if (htmlBody.includes('</body>')) {
-      htmlBody = htmlBody.replace('</body>', `${trackingPixel}</body>`);
-    } else {
-      htmlBody += trackingPixel;
-    }
+  const htmlBody = options.bodyHtml
+    ? injectTracking(options.bodyHtml, {
+        baseUrl,
+        trackingId: options.trackingId,
+      })
+    : null;
 
-    // Wrap links with click tracking redirects
-    // Match href attributes in anchor tags
-    const linkRegex = /<a\s+([^>]*\s+)?href=["']([^"']+)["']/gi;
-    htmlBody = htmlBody.replace(linkRegex, (match, attrs, url) => {
-      // Skip if already a tracking URL
-      if (url.includes('/api/email-tracking/click/')) {
-        return match;
-      }
+  const message = buildMimeMessage({
+    fromEmail,
+    fromName: options.fromName ?? null,
+    toEmail: options.to,
+    toName: options.toName ?? null,
+    subject: options.subject,
+    bodyText: options.bodyText,
+    bodyHtml: htmlBody,
+  });
 
-      const trackingUrl = `${baseUrl}/api/email-tracking/click/${options.trackingId}?url=${encodeURIComponent(url)}`;
-      return `<a ${attrs || ''}href="${trackingUrl}"`;
-    });
-  }
-
-  // Build MIME message
-  const messageParts = [
-    `From: ${options.fromName ? `"${options.fromName}" <${fromEmail}>` : fromEmail}`,
-    `To: ${options.toName ? `"${options.toName}" <${options.to}>` : options.to}`,
-    `Subject: ${options.subject}`,
-    'MIME-Version: 1.0',
-    `Content-Type: multipart/alternative; boundary="${boundary}"`,
-    '',
-    `--${boundary}`,
-    'Content-Type: text/plain; charset=UTF-8',
-    'Content-Transfer-Encoding: 7bit',
-    '',
-    options.bodyText,
-    '',
-  ];
-
-  // Add HTML part if provided
-  if (htmlBody) {
-    messageParts.push(
-      `--${boundary}`,
-      'Content-Type: text/html; charset=UTF-8',
-      'Content-Transfer-Encoding: 7bit',
-      '',
-      htmlBody,
-      ''
-    );
-  }
-
-  messageParts.push(`--${boundary}--`);
-
-  const message = messageParts.join('\r\n');
-
-  // Encode to base64url (Gmail API requirement)
-  return Buffer.from(message)
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
+  return toGmailRawString(message);
 }
 
 /**
@@ -163,11 +120,6 @@ export async function sendEmail(
         );
 
         accessToken = newTokens.accessToken;
-
-        // Update status to connected if it was in error
-        if (account.status === 'error') {
-          await updateEmailAccountStatus(emailAccountId, 'connected', null);
-        }
       } catch (error) {
         // Token refresh failed - mark account as error
         await updateEmailAccountStatus(

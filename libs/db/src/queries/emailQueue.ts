@@ -120,6 +120,25 @@ export const getQueueStatsByCampaign = async (campaignId: string) => {
 };
 
 /**
+ * Count pending emails for a given email account
+ */
+export const getPendingCountForEmailAccount = async (
+  emailAccountId: string
+): Promise<number> => {
+  const results = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(emailQueue)
+    .where(
+      and(
+        eq(emailQueue.emailAccountId, emailAccountId),
+        eq(emailQueue.status, 'pending')
+      )
+    );
+
+  return results[0]?.count ?? 0;
+};
+
+/**
  * Get failed emails that can be retried
  */
 export const getFailedEmailsForRetry = async (): Promise<EmailQueue[]> => {

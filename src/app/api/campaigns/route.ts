@@ -19,7 +19,7 @@ import {
 const RecipientSchema = z.object({
   email: z.string().email(),
   name: z.string().optional(),
-  variables: z.record(z.string()).optional(),
+  variables: z.record(z.string(), z.string()).optional(),
 });
 
 const CreateCampaignSchema = z.object({
@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { success: false, error: 'Invalid request data', details: error.errors },
+        { success: false, error: 'Invalid request data', details: error.issues },
         { status: 400 }
       );
     }
