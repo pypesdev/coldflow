@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
-import { z } from 'zod'
+import type { z } from 'zod'
 
 import { requireAuth, AuthorizationError } from '@/lib/authorization'
 import { rateLimiter } from '@/lib/rateLimiter'
@@ -19,6 +19,7 @@ import { resolveTemplateById } from '@/lib/templates/resolver'
 import {
   buildPersonalizationPrompt,
   parseClaudeEnvelope,
+  personalizeRequestSchema,
   PersonalizationFormatError,
   prefillTemplate,
   type PersonalizeContact,
@@ -28,18 +29,7 @@ const PERSONALIZE_MAX_REQUESTS = 1
 const PERSONALIZE_WINDOW_MS = 2_000
 const DEFAULT_MODEL = 'claude-haiku-4-5-20251001'
 
-const personalizeSchema = z.object({
-  template_id: z.string().min(1),
-  contact: z
-    .object({
-      name: z.string().min(1).max(200),
-      company: z.string().min(1).max(200),
-      role: z.string().min(1).max(200),
-    })
-    .catchall(z.union([z.string().max(2_000), z.undefined()])),
-})
-
-function normalizeContact(input: z.infer<typeof personalizeSchema>['contact']): PersonalizeContact {
+function normalizeContact(input: z.infer<typeof personalizeRequestSchema>['contact']): PersonalizeContact {
   const { name, company, role, ...rest } = input
   const optional_context: Record<string, string> = {}
   for (const [k, v] of Object.entries(rest)) {
@@ -98,7 +88,7 @@ export async function POST(request: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
-  const parsed = personalizeSchema.safeParse(body)
+  const parsed = personalizeRequestSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json(
       { error: 'Invalid request', details: parsed.error.flatten() },
