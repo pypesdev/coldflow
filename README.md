@@ -21,6 +21,9 @@
 # MVP features:
 
 ✅ - enter a domain and see SPF / dkim / dmarc records
+   <sub>Want this without spinning up coldflow? Use the standalone CLI:
+   [`npx dmarc-doctor yourdomain.com`](https://github.com/pypesdev/dmarc-doctor) —
+   same checker, zero deps, prints colored verdicts plus 'how to fix'.</sub>
 - connect google smtp accounts
 - upload a csv of contacts
 - Create a single-step email sequence with basic personalization ({first_name}).
