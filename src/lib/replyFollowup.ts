@@ -3,6 +3,7 @@ import {
   cancelScheduledFollowupsForContact,
   createEmailEvent,
   createQueueEntry,
+  createReply,
   createReplyFollowup,
   eventExistsForTracking,
   getDueScheduledFollowups,
@@ -11,8 +12,10 @@ import {
   incrementCampaignStat,
   markReplyFollowupSent,
   cancelReplyFollowup,
+  Reply,
   ReplyFollowup,
 } from "@coldflow/db";
+import { triageReply } from "./replyTriage";
 
 /**
  * Default offset (in days) between an inbound reply and the silent-reply
@@ -62,6 +65,8 @@ export interface RecordInboundReplyResult {
   followup?: ReplyFollowup;
   cancelledExistingCount: number;
   reason?: "no_queue_entry" | "heuristic_no_match";
+  /** Triaged reply row created for the warm-reply UI, if any. */
+  triagedReply?: Reply;
 }
 
 /**
@@ -86,9 +91,11 @@ export const recordInboundReply = async (
   }
 
   const alreadyReplied = await eventExistsForTracking(queueEntry.trackingId, "replied");
+  let eventId: string | undefined;
   if (!alreadyReplied) {
+    eventId = nanoid();
     await createEmailEvent({
-      id: nanoid(),
+      id: eventId,
       queueId: queueEntry.id,
       trackingId: queueEntry.trackingId,
       eventType: "replied",
@@ -97,6 +104,28 @@ export const recordInboundReply = async (
     });
     await incrementCampaignStat(queueEntry.campaignId, "replyCount");
   }
+
+  // Warm-reply triage: classify intent + draft a follow-up so the user can
+  // bucket and 1-click respond from /dashboard/replies.
+  const triage = await triageReply({
+    replyBody: input.replyBody,
+    originalSubject: queueEntry.subject,
+    recipientName: queueEntry.recipientName,
+  });
+  const triagedReply = await createReply({
+    id: nanoid(),
+    contactId: queueEntry.id,
+    campaignId: queueEntry.campaignId,
+    eventId: eventId ?? null,
+    recipientEmail: queueEntry.recipientEmail,
+    recipientName: queueEntry.recipientName,
+    body: input.replyBody,
+    intent: triage.intent,
+    confidence: triage.confidence,
+    suggestedFollowup: triage.suggestedFollowup,
+    status: "new",
+    receivedAt: replyAt,
+  });
 
   const cancelledExistingCount = await cancelScheduledFollowupsForContact(
     queueEntry.id,
@@ -108,6 +137,7 @@ export const recordInboundReply = async (
       followupCreated: false,
       cancelledExistingCount,
       reason: "heuristic_no_match",
+      triagedReply,
     };
   }
 
@@ -122,7 +152,7 @@ export const recordInboundReply = async (
     status: "scheduled",
   });
 
-  return { followupCreated: true, followup, cancelledExistingCount };
+  return { followupCreated: true, followup, cancelledExistingCount, triagedReply };
 };
 
 const SILENT_FOLLOWUP_SUBJECT_PREFIX = "Re: ";
