@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { pgTable, text, timestamp, boolean, index, pgEnum, integer, jsonb, real } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, index, uniqueIndex, pgEnum, integer, jsonb, real } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -464,6 +464,10 @@ export const reply = pgTable(
     index("reply_intent_idx").on(table.intent),
     index("reply_status_intent_idx").on(table.status, table.intent),
     index("reply_receivedAt_idx").on(table.receivedAt),
+    // Belt-and-braces dedupe: if the same email_event ever produced two reply
+    // rows for the same contact, that's a bug. Postgres treats NULL as
+    // distinct, so legacy rows with event_id IS NULL won't collide.
+    uniqueIndex("reply_contactId_eventId_unique").on(table.contactId, table.eventId),
   ]
 );
 

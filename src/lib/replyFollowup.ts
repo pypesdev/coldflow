@@ -64,7 +64,7 @@ export interface RecordInboundReplyResult {
   followupCreated: boolean;
   followup?: ReplyFollowup;
   cancelledExistingCount: number;
-  reason?: "no_queue_entry" | "heuristic_no_match";
+  reason?: "no_queue_entry" | "heuristic_no_match" | "duplicate_delivery";
   /** Triaged reply row created for the warm-reply UI, if any. */
   triagedReply?: Reply;
 }
@@ -91,19 +91,27 @@ export const recordInboundReply = async (
   }
 
   const alreadyReplied = await eventExistsForTracking(queueEntry.trackingId, "replied");
-  let eventId: string | undefined;
-  if (!alreadyReplied) {
-    eventId = nanoid();
-    await createEmailEvent({
-      id: eventId,
-      queueId: queueEntry.id,
-      trackingId: queueEntry.trackingId,
-      eventType: "replied",
-      timestamp: replyAt,
-      metadata: { excerpt: buildExcerpt(input.replyBody) },
-    });
-    await incrementCampaignStat(queueEntry.campaignId, "replyCount");
+  if (alreadyReplied) {
+    // Duplicate webhook delivery (Gmail Pub/Sub is at-least-once; IMAP pollers
+    // can repeat too). Short-circuit so we don't double-write the triaged reply
+    // row, double-bill the LLM call, or cancel a follow-up twice.
+    return {
+      followupCreated: false,
+      cancelledExistingCount: 0,
+      reason: "duplicate_delivery",
+    };
   }
+
+  const eventId = nanoid();
+  await createEmailEvent({
+    id: eventId,
+    queueId: queueEntry.id,
+    trackingId: queueEntry.trackingId,
+    eventType: "replied",
+    timestamp: replyAt,
+    metadata: { excerpt: buildExcerpt(input.replyBody) },
+  });
+  await incrementCampaignStat(queueEntry.campaignId, "replyCount");
 
   // Warm-reply triage: classify intent + draft a follow-up so the user can
   // bucket and 1-click respond from /dashboard/replies.
@@ -116,7 +124,7 @@ export const recordInboundReply = async (
     id: nanoid(),
     contactId: queueEntry.id,
     campaignId: queueEntry.campaignId,
-    eventId: eventId ?? null,
+    eventId,
     recipientEmail: queueEntry.recipientEmail,
     recipientName: queueEntry.recipientName,
     body: input.replyBody,
