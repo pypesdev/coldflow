@@ -1,3 +1,4 @@
+import Anthropic from "@anthropic-ai/sdk";
 import type { ReplyIntent } from "@coldflow/db";
 
 export interface TriageInput {
@@ -17,7 +18,6 @@ export interface TriageResult {
 }
 
 const CLAUDE_MODEL = process.env.ANTHROPIC_MODEL ?? "claude-haiku-4-5-20251001";
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 
 const VALID_INTENTS: ReadonlySet<ReplyIntent> = new Set([
   "interested",
@@ -229,31 +229,20 @@ export const triageReplyLLM = async (
   ].join("\n");
 
   try {
-    const res = await fetch(ANTHROPIC_API_URL, {
-      method: "POST",
-      signal: opts?.signal,
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
+    const client = new Anthropic({ apiKey });
+    const message = await client.messages.create(
+      {
         model: CLAUDE_MODEL,
         max_tokens: 600,
         system: TRIAGE_PROMPT,
         messages: [{ role: "user", content: userPrompt }],
-      }),
-    });
+      },
+      { signal: opts?.signal }
+    );
 
-    if (!res.ok) {
-      console.error("Anthropic triage non-200:", res.status, await res.text());
-      return null;
-    }
-
-    const json = (await res.json()) as {
-      content?: Array<{ type: string; text?: string }>;
-    };
-    const text = json.content?.find((c) => c.type === "text")?.text?.trim();
+    const text = message.content
+      .find((block): block is Anthropic.TextBlock => block.type === "text")
+      ?.text.trim();
     if (!text) return null;
 
     const parsed = parseLLMJson(text);
