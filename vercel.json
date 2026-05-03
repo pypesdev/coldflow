@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/cron/process-queue",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/process-followups",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/refresh-tokens",
+      "schedule": "*/30 * * * *"
+    }
+  ]
+}
