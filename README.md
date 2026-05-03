@@ -6,6 +6,7 @@
 - list creation
 - enrichment
 - research
+- intent signals
 - ai personalization
 - sequencing
 
