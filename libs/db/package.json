@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "dotenv": "16.4.7",
-    "drizzle-orm": "^0.36.4",
+    "drizzle-orm": "0.44.6",
     "pg": "^8.13.1"
   },
   "devDependencies": {
