@@ -22,6 +22,27 @@ finish.
 
 ## Setup
 
+Prereqs: **Node 20+**, **pnpm**, **Docker + Docker CLI**.
+
+**Install pnpm** (pick one):
+```bash
+corepack enable && corepack prepare pnpm@latest --activate   # easiest if you have Node 20+
+# or
+npm install -g pnpm
+# or (macOS)
+brew install pnpm
+```
+
+**Install Docker:**
+- **macOS / Windows:** install [Docker Desktop](https://www.docker.com/products/docker-desktop/) — includes the Docker CLI and Compose. Launch it once so the daemon is running.
+- **Linux:** follow the [Docker Engine install guide](https://docs.docker.com/engine/install/) for your distro, then `sudo systemctl start docker`.
+
+Verify both are working:
+```bash
+pnpm -v && docker info > /dev/null && echo "ready"
+```
+
+**Run the app:**
 ```bash
 git clone https://github.com/pypesdev/coldflow.git
 cd coldflow
@@ -31,7 +52,7 @@ docker compose up -d db
 pnpm dev
 ```
 
-Open `http://localhost:3000`. Prereqs: **pnpm**, **Docker + Docker CLI**, **Node 20+**.
+Open `http://localhost:3000`.
 
 CI runs on every PR (`.github/workflows/ci.yml`):
 - `pnpm exec tsc --noEmit`
