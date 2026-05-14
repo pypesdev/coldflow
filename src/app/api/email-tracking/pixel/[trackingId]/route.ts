@@ -6,6 +6,7 @@ import {
   eventExistsForTracking,
   incrementCampaignStat,
 } from '@coldflow/db';
+import { classifyPixelRequest } from '@/lib/openTrackingFilter';
 
 /**
  * GET /api/email-tracking/pixel/[trackingId].png
@@ -34,35 +35,65 @@ export async function GET(
     const queueEntry = await getQueueEntryByTrackingId(cleanTrackingId);
 
     if (queueEntry) {
-      // Check if this is the first open event (to avoid inflating stats)
-      const firstOpen = !(await eventExistsForTracking(cleanTrackingId, 'opened'));
-
       // Get request metadata
       const ipAddress = request.headers.get('x-forwarded-for')?.split(',')[0] ||
                        request.headers.get('x-real-ip') ||
                        'unknown';
       const userAgent = request.headers.get('user-agent') || 'unknown';
 
-      // Create email event
-      await createEmailEvent({
-        id: nanoid(),
-        queueId: queueEntry.id,
-        trackingId: cleanTrackingId,
-        eventType: 'opened',
-        ipAddress,
+      // Filter prefetcher hits (Gmail image proxy, Apple MPP, security
+      // scanners, sub-send-window scans). Counting these as opens silently
+      // inflates open-rate to noise.
+      const classification = classifyPixelRequest({
         userAgent,
-        timestamp: new Date(),
-        metadata: {
-          firstOpen,
-        },
+        ipAddress,
+        sentAt: queueEntry.sentAt,
       });
 
-      // Increment campaign open count only for first open
-      if (firstOpen) {
-        await incrementCampaignStat(queueEntry.campaignId, 'openCount');
-      }
+      if (classification.isPrefetcher) {
+        // Record as a discrete event (so debugging stays possible) but never
+        // increment openCount.
+        await createEmailEvent({
+          id: nanoid(),
+          queueId: queueEntry.id,
+          trackingId: cleanTrackingId,
+          eventType: 'opened',
+          ipAddress,
+          userAgent,
+          timestamp: new Date(),
+          metadata: {
+            firstOpen: false,
+            prefetcher: true,
+            prefetcherReason: classification.reason,
+          },
+        });
+        console.log(
+          `Email pixel prefetcher: ${cleanTrackingId} (${classification.reason})`,
+        );
+      } else {
+        const firstOpen = !(await eventExistsForTracking(
+          cleanTrackingId,
+          'opened',
+          { excludePrefetcher: true },
+        ));
 
-      console.log(`Email opened: ${cleanTrackingId} (first: ${firstOpen})`);
+        await createEmailEvent({
+          id: nanoid(),
+          queueId: queueEntry.id,
+          trackingId: cleanTrackingId,
+          eventType: 'opened',
+          ipAddress,
+          userAgent,
+          timestamp: new Date(),
+          metadata: { firstOpen },
+        });
+
+        if (firstOpen) {
+          await incrementCampaignStat(queueEntry.campaignId, 'openCount');
+        }
+
+        console.log(`Email opened: ${cleanTrackingId} (first: ${firstOpen})`);
+      }
     }
 
     // Always return the tracking pixel, even if tracking ID not found

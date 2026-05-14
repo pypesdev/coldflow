@@ -42,21 +42,31 @@ export const getEventsByTrackingId = async (trackingId: string): Promise<EmailEv
 
 /**
  * Check if a specific event type already exists for a tracking ID
- * (useful for preventing duplicate open tracking)
+ * (useful for preventing duplicate open tracking).
+ *
+ * `excludePrefetcher`: skip rows tagged `metadata.prefetcher === true`.
+ * The pixel route writes those rows for Gmail/Apple/scanner hits so
+ * "did a real human open this" can be answered without inflating counts.
  */
 export const eventExistsForTracking = async (
   trackingId: string,
-  eventType: 'sent' | 'opened' | 'clicked' | 'replied' | 'bounced' | 'unsubscribed'
+  eventType: 'sent' | 'opened' | 'clicked' | 'replied' | 'bounced' | 'unsubscribed',
+  options: { excludePrefetcher?: boolean } = {}
 ): Promise<boolean> => {
+  const filters = [
+    eq(emailEvent.trackingId, trackingId),
+    eq(emailEvent.eventType, eventType),
+  ];
+  if (options.excludePrefetcher) {
+    filters.push(
+      sql`(${emailEvent.metadata} -> 'prefetcher' IS NULL OR ${emailEvent.metadata} ->> 'prefetcher' <> 'true')`
+    );
+  }
+
   const results = await db
     .select({ id: emailEvent.id })
     .from(emailEvent)
-    .where(
-      and(
-        eq(emailEvent.trackingId, trackingId),
-        eq(emailEvent.eventType, eventType)
-      )
-    )
+    .where(and(...filters))
     .limit(1);
 
   return results.length > 0;
