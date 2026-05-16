@@ -24,6 +24,7 @@
     "db:studio": "pnpm --filter db db:studio"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.92.0",
     "@payloadcms/admin-bar": "3.64.0",
     "@payloadcms/db-postgres": "3.64.0",
     "@payloadcms/live-preview-react": "3.64.0",
@@ -67,6 +68,7 @@
     "sharp": "0.34.2",
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7",
+    "yaml": "^2.8.4",
     "zod": "^4.1.13"
   },
   "devDependencies": {
