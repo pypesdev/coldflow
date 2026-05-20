@@ -1,0 +1,85 @@
+{
+  "description": "Hand-labeled inbound replies used to bench the triage classifier. The deterministic heuristic in lib/replyTriage.ts must score >= 80% on this set; the LLM path is expected to do better. Add new cases liberally — the bar holds.",
+  "cases": [
+    {
+      "label": "interested-pricing",
+      "intent": "interested",
+      "body": "This sounds interesting — can you send pricing for a team of about 50?"
+    },
+    {
+      "label": "interested-call",
+      "intent": "interested",
+      "body": "Happy to chat. Does Thursday at 2pm work, or send me a calendar link."
+    },
+    {
+      "label": "interested-question",
+      "intent": "interested",
+      "body": "Quick question — does this integrate with HubSpot out of the box?"
+    },
+    {
+      "label": "interested-tell-more",
+      "intent": "interested",
+      "body": "Tell me more. Curious how this compares to what we're using now."
+    },
+    {
+      "label": "objection-already-have",
+      "intent": "objection",
+      "body": "Thanks but we already have a vendor for this and we're locked in for the year."
+    },
+    {
+      "label": "objection-not-fit",
+      "intent": "objection",
+      "body": "Honestly, not a fit for what we're trying to do. Best of luck."
+    },
+    {
+      "label": "objection-budget",
+      "intent": "objection",
+      "body": "Looks neat but no budget right now — and frankly it's too expensive for our stage."
+    },
+    {
+      "label": "objection-remove",
+      "intent": "objection",
+      "body": "Please remove me from this list. Not interested."
+    },
+    {
+      "label": "not-now-circle-back",
+      "intent": "not_now",
+      "body": "Bad timing on our end. Can you reach out later — maybe in Q3?"
+    },
+    {
+      "label": "not-now-next-quarter",
+      "intent": "not_now",
+      "body": "Currently focused on a migration. Ask me again next quarter, I'll have more headspace."
+    },
+    {
+      "label": "not-now-revisit",
+      "intent": "not_now",
+      "body": "We're swamped through year-end. Worth revisiting in January."
+    },
+    {
+      "label": "ooo-vacation",
+      "intent": "out_of_office",
+      "body": "I'm currently away on vacation until Monday with limited access to email. For urgent items please contact our support team."
+    },
+    {
+      "label": "ooo-auto-reply",
+      "intent": "out_of_office",
+      "body": "This is an automatic reply. I am out of the office and will be back on the 14th."
+    },
+    {
+      "label": "ooo-holiday",
+      "intent": "out_of_office",
+      "body": "Thanks for your email. I am away from my desk on holiday and will respond when I return."
+    },
+    {
+      "label": "interested-send-over",
+      "intent": "interested",
+      "body": "Sounds good — send over a one-pager and I'll forward to the team."
+    },
+    {
+      "label": "objection-wrong-person",
+      "intent": "objection",
+      "body": "I'm no longer the right person for this — please stop emailing me on this thread."
+    }
+  ]
+}

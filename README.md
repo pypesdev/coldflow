@@ -53,6 +53,24 @@ before running the same commands.
   (or any question) and then goes silent, automatically schedule a short
   follow-up 3 days later. The follow-up cancels itself if the prospect
   replies again before it sends. See **Pending follow-ups** on the dashboard.
+- Warm-reply triage: every inbound reply is classified into one of four
+  intent buckets — Interested, Objection, Not Now, Out of Office — with a
+  pre-drafted follow-up the user can edit and send in one click. Lives at
+  **/dashboard/replies**.
+
+## Warm-reply triage
+
+When a reply lands, the ingest path (`POST /api/email-tracking/reply`)
+classifies it via Anthropic's Claude (or a deterministic keyword heuristic
+when no API key is set) and writes a row to the `reply` table. The
+`/dashboard/replies` page surfaces those rows in four tabs and exposes
+[Send] / [Edit] / [Archive] actions per card. Clicking [Send] reuses the
+existing `email_queue` send pipeline — same account, same `Re:` subject —
+so warm replies stay inside coldflow's regular outbound rate limits.
+
+Set `ANTHROPIC_API_KEY` in `.env` to enable the LLM classifier. Without it
+the heuristic still ships 80%+ classification accuracy on
+`tests/triage/cases.json`.
 
 
 
