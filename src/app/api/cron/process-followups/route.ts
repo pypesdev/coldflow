@@ -1,38 +1,32 @@
-import { NextRequest, NextResponse } from "next/server";
-import { processDueReplyFollowups } from "@/lib/replyFollowup";
+import { NextRequest, NextResponse } from 'next/server';
+import { processDueReplyFollowups } from '@/lib/replyFollowup';
+import { verifyCronAuth } from '@/lib/cronAuth';
 
 /**
- * POST /api/cron/process-followups
+ * /api/cron/process-followups
  *
- * Cron endpoint for processing scheduled silent-reply follow-ups. Mirrors the
- * auth shape of /api/cron/process-queue (Bearer CRON_SECRET) so the same cron
- * runner can hit both.
+ * Cron endpoint for processing scheduled silent-reply follow-ups. Accepts
+ * both GET (used by Vercel Cron) and POST (manual triggers). Auth is
+ * `Authorization: Bearer $CRON_SECRET` for both. Mirrors process-queue.
  *
  * Recommended frequency: every 5 minutes.
  */
 
-export async function POST(request: NextRequest) {
+async function handle(request: NextRequest) {
+  const auth = verifyCronAuth({
+    authorizationHeader: request.headers.get('authorization'),
+    cronSecret: process.env.CRON_SECRET,
+  });
+  if (!auth.ok) {
+    if (auth.status === 500) console.error('CRON_SECRET not configured');
+    return NextResponse.json(
+      { success: false, error: auth.error },
+      { status: auth.status }
+    );
+  }
+
   try {
-    const authHeader = request.headers.get("authorization");
-    const cronSecret = process.env.CRON_SECRET;
-
-    if (!cronSecret) {
-      console.error("CRON_SECRET not configured");
-      return NextResponse.json(
-        { success: false, error: "Server misconfiguration" },
-        { status: 500 }
-      );
-    }
-
-    if (!authHeader || authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
     const result = await processDueReplyFollowups(50);
-
     return NextResponse.json({
       success: true,
       result: {
@@ -44,34 +38,17 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error in follow-up processing cron:", error);
-
+    console.error('Error in follow-up processing cron:', error);
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to process follow-ups",
-        details: error instanceof Error ? error.message : "Unknown error",
+        error: 'Failed to process follow-ups',
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
   }
 }
 
-export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret || !authHeader || authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json(
-      { success: false, error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
-
-  return NextResponse.json({
-    success: true,
-    message: "Follow-up processing cron endpoint is healthy",
-    endpoint: "/api/cron/process-followups",
-    method: "POST",
-  });
-}
+export const GET = handle;
+export const POST = handle;

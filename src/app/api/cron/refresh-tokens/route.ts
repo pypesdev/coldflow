@@ -1,41 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { refreshExpiringTokens } from '@/lib/tokenRefreshJob';
+import { verifyCronAuth } from '@/lib/cronAuth';
 
 /**
- * POST /api/cron/refresh-tokens
+ * /api/cron/refresh-tokens
  *
- * Cron endpoint for refreshing expiring OAuth tokens.
- * Protected by CRON_SECRET environment variable.
+ * Cron endpoint for refreshing expiring OAuth tokens. Accepts both GET (used
+ * by Vercel Cron) and POST (manual triggers). Auth is
+ * `Authorization: Bearer $CRON_SECRET` for both.
  *
- * Configure with Vercel Cron, GitHub Actions, or external cron service:
- * - Recommended frequency: Every 30 minutes
- * - Header: Authorization: Bearer YOUR_CRON_SECRET
+ * Recommended frequency: every 30 minutes.
  */
 
-export async function POST(request: NextRequest) {
+async function handle(request: NextRequest) {
+  const auth = verifyCronAuth({
+    authorizationHeader: request.headers.get('authorization'),
+    cronSecret: process.env.CRON_SECRET,
+  });
+  if (!auth.ok) {
+    if (auth.status === 500) console.error('CRON_SECRET not configured');
+    return NextResponse.json(
+      { success: false, error: auth.error },
+      { status: auth.status }
+    );
+  }
+
   try {
-    // Verify CRON_SECRET
-    const authHeader = request.headers.get('authorization');
-    const cronSecret = process.env.CRON_SECRET;
-
-    if (!cronSecret) {
-      console.error('CRON_SECRET not configured');
-      return NextResponse.json(
-        { success: false, error: 'Server misconfiguration' },
-        { status: 500 }
-      );
-    }
-
-    if (!authHeader || authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    // Refresh expiring tokens
     const result = await refreshExpiringTokens();
-
     return NextResponse.json({
       success: true,
       result: {
@@ -46,7 +37,6 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error in token refresh cron:', error);
-
     return NextResponse.json(
       {
         success: false,
@@ -58,23 +48,5 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Support GET for health checks
-export async function GET(request: NextRequest) {
-  // Verify CRON_SECRET for GET as well
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret || !authHeader || authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json(
-      { success: false, error: 'Unauthorized' },
-      { status: 401 }
-    );
-  }
-
-  return NextResponse.json({
-    success: true,
-    message: 'Token refresh cron endpoint is healthy',
-    endpoint: '/api/cron/refresh-tokens',
-    method: 'POST',
-  });
-}
+export const GET = handle;
+export const POST = handle;
