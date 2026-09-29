@@ -57,6 +57,13 @@
       "when": 1777758682271,
       "tag": "0007_rare_vector",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1777804426426,
+      "tag": "0008_white_mongoose",
+      "breakpoints": true
     }
   ]
 }

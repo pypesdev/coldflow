@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { pgTable, text, timestamp, boolean, index, pgEnum, integer, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, index, pgEnum, integer, jsonb, real } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -409,6 +409,64 @@ export const replyFollowup = pgTable(
   ]
 );
 
+// Warm-reply triage table.
+// One row per inbound reply, populated by the triage classifier so the user
+// can bucket and one-click follow-up via the /dashboard/replies UI. Distinct
+// from `email_event` of type 'replied' (raw landing record) and from
+// `reply_followup` (silent-reply scheduler).
+export const replyIntentEnum = pgEnum("reply_intent", [
+  "interested",
+  "objection",
+  "not_now",
+  "out_of_office",
+]);
+export const replyTriageStatusEnum = pgEnum("reply_triage_status", [
+  "new",
+  "actioned",
+  "archived",
+]);
+
+export const reply = pgTable(
+  "reply",
+  {
+    id: text("id").primaryKey(),
+    // Original outbound email this is a reply to. Carries recipient + campaign + account context.
+    contactId: text("contact_id")
+      .notNull()
+      .references(() => emailQueue.id, { onDelete: "cascade" }),
+    campaignId: text("campaign_id")
+      .notNull()
+      .references(() => emailCampaign.id, { onDelete: "cascade" }),
+    // Optional pointer to the email_event row that recorded the reply landing.
+    eventId: text("event_id").references(() => emailEvent.id, { onDelete: "set null" }),
+    recipientEmail: text("recipient_email").notNull(),
+    recipientName: text("recipient_name"),
+    body: text("body").notNull(),
+    intent: replyIntentEnum("intent").notNull(),
+    confidence: real("confidence").notNull(),
+    suggestedFollowup: text("suggested_followup").notNull(),
+    status: replyTriageStatusEnum("status").notNull().default("new"),
+    // Queue row created when the user clicks "Send" (null until actioned).
+    sentQueueId: text("sent_queue_id").references(() => emailQueue.id, { onDelete: "set null" }),
+    actionedAt: timestamp("actioned_at"),
+    archivedAt: timestamp("archived_at"),
+    receivedAt: timestamp("received_at").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("reply_contactId_idx").on(table.contactId),
+    index("reply_campaignId_idx").on(table.campaignId),
+    index("reply_status_idx").on(table.status),
+    index("reply_intent_idx").on(table.intent),
+    index("reply_status_intent_idx").on(table.status, table.intent),
+    index("reply_receivedAt_idx").on(table.receivedAt),
+  ]
+);
+
 // All Relations (defined after all tables)
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
@@ -509,6 +567,27 @@ export const emailUnsubscribeRelations = relations(emailUnsubscribe, ({ one }) =
   }),
 }));
 
+export const replyRelations = relations(reply, ({ one }) => ({
+  campaign: one(emailCampaign, {
+    fields: [reply.campaignId],
+    references: [emailCampaign.id],
+  }),
+  contact: one(emailQueue, {
+    fields: [reply.contactId],
+    references: [emailQueue.id],
+    relationName: "replyContact",
+  }),
+  sentQueue: one(emailQueue, {
+    fields: [reply.sentQueueId],
+    references: [emailQueue.id],
+    relationName: "replySentQueue",
+  }),
+  event: one(emailEvent, {
+    fields: [reply.eventId],
+    references: [emailEvent.id],
+  }),
+}));
+
 export const replyFollowupRelations = relations(replyFollowup, ({ one }) => ({
   campaign: one(emailCampaign, {
     fields: [replyFollowup.sequenceId],
@@ -545,4 +624,8 @@ export type EmailUnsubscribe = typeof emailUnsubscribe.$inferSelect;
 export type InsertEmailUnsubscribe = typeof emailUnsubscribe.$inferInsert;
 export type ReplyFollowup = typeof replyFollowup.$inferSelect;
 export type InsertReplyFollowup = typeof replyFollowup.$inferInsert;
+export type Reply = typeof reply.$inferSelect;
+export type InsertReply = typeof reply.$inferInsert;
+export type ReplyIntent = (typeof replyIntentEnum.enumValues)[number];
+export type ReplyTriageStatus = (typeof replyTriageStatusEnum.enumValues)[number];
 

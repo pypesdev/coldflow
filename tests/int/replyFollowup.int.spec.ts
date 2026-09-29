@@ -9,6 +9,7 @@ const { dbMock } = vi.hoisted(() => ({
     cancelScheduledFollowupsForContact: vi.fn(),
     createEmailEvent: vi.fn(),
     createQueueEntry: vi.fn(),
+    createReply: vi.fn(),
     createReplyFollowup: vi.fn(),
     eventExistsForTracking: vi.fn(),
     getDueScheduledFollowups: vi.fn(),
@@ -22,6 +23,13 @@ const { dbMock } = vi.hoisted(() => ({
 
 vi.mock('@coldflow/db', () => dbMock)
 
+const { triageMock } = vi.hoisted(() => ({
+  triageMock: {
+    triageReply: vi.fn(),
+  },
+}))
+vi.mock('@/lib/replyTriage', () => triageMock)
+
 import {
   getFollowupOffsetMs,
   processDueReplyFollowups,
@@ -33,6 +41,14 @@ beforeEach(() => {
   for (const fn of Object.values(dbMock)) {
     fn.mockReset()
   }
+  triageMock.triageReply.mockReset()
+  triageMock.triageReply.mockResolvedValue({
+    intent: 'interested',
+    confidence: 0.8,
+    suggestedFollowup: 'mock follow-up',
+    source: 'heuristic',
+  })
+  dbMock.createReply.mockImplementation(async (data: any) => ({ ...data }))
   delete process.env.REPLY_FOLLOWUP_OFFSET_DAYS
 })
 
