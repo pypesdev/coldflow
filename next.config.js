@@ -37,6 +37,12 @@ const nextConfig = {
   async headers() { return [ { source: '/(.*)', headers: [ { key: 'Cross-Origin-Opener-Policy', value: 'same-origin', }, ], }, ]; },
   reactStrictMode: true,
   redirects,
+  // /api/personalize reads templates/*.md at request time. On Vercel
+  // serverless the function dir, not the repo root, is `process.cwd()`,
+  // so the markdown pack must be explicitly traced into the bundle.
+  outputFileTracingIncludes: {
+    '/api/personalize': ['./templates/**/*.md'],
+  },
 }
 
 export default withPayload(withNextra(nextConfig), { devBundleServerPackages: false })

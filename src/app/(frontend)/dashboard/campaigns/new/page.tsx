@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { TemplatePicker } from '@/components/TemplatePicker'
+import { PersonalizeDialog } from '@/components/PersonalizeDialog'
 import {
   getTemplateById,
   type EmailTemplate,
@@ -42,6 +43,8 @@ function NewCampaignPageInner() {
   const [variables, setVariables] = useState<string[]>([])
   const [recipientsInput, setRecipientsInput] = useState('')
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [personalizeOpen, setPersonalizeOpen] = useState(false)
+  const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null)
   const [accounts, setAccounts] = useState<EmailAccount[]>([])
   const [accountsError, setAccountsError] = useState<string | null>(null)
   const [emailAccountId, setEmailAccountId] = useState('')
@@ -51,6 +54,7 @@ function NewCampaignPageInner() {
     setSubject(template.subject)
     setBody(template.body)
     setVariables(template.variables)
+    setActiveTemplateId(template.id)
     setName((current) => current || template.name)
   }, [])
 
@@ -144,13 +148,29 @@ function NewCampaignPageInner() {
               and other variables that get replaced per recipient.
             </p>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setPickerOpen(true)}
-          >
-            Browse templates
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setPickerOpen(true)}
+            >
+              Browse templates
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setPersonalizeOpen(true)}
+              disabled={!activeTemplateId}
+              title={
+                activeTemplateId
+                  ? 'Add 1–2 AI personalization touches for a specific contact'
+                  : 'Pick a template first'
+              }
+              data-testid="personalize-with-ai-button"
+            >
+              Personalize with AI
+            </Button>
+          </div>
         </header>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
@@ -270,6 +290,18 @@ function NewCampaignPageInner() {
             )}
           </div>
         </form>
+
+        <PersonalizeDialog
+          open={personalizeOpen}
+          onOpenChange={setPersonalizeOpen}
+          templateId={activeTemplateId}
+          currentSubject={subject}
+          currentBody={body}
+          onApply={(newSubject, newBody) => {
+            setSubject(newSubject)
+            setBody(newBody)
+          }}
+        />
 
         <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
           <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
