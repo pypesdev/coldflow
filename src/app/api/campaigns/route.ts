@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { nanoid } from 'nanoid';
 import { requireAuth, AuthorizationError } from '@/lib/authorization';
+import { applyVariables } from '@/lib/templateSubstitution';
 import {
   createCampaign,
   bulkCreateQueueEntries,
@@ -82,19 +83,11 @@ export async function POST(request: NextRequest) {
 
     // Create queue entries for all recipients
     const queueEntries = validatedData.recipients.map((recipient) => {
-      // Simple variable replacement for subject and body
-      let subject = validatedData.subject;
-      let bodyHtml = validatedData.bodyHtml || '';
-      let bodyText = validatedData.bodyText;
-
-      if (recipient.variables) {
-        Object.entries(recipient.variables).forEach(([key, value]) => {
-          const placeholder = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
-          subject = subject.replace(placeholder, value);
-          bodyHtml = bodyHtml.replace(placeholder, value);
-          bodyText = bodyText.replace(placeholder, value);
-        });
-      }
+      const subject = applyVariables(validatedData.subject, recipient.variables);
+      const bodyHtml = validatedData.bodyHtml
+        ? applyVariables(validatedData.bodyHtml, recipient.variables)
+        : '';
+      const bodyText = applyVariables(validatedData.bodyText, recipient.variables);
 
       // Generate unique tracking ID
       const trackingId = nanoid();
