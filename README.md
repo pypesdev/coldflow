@@ -45,6 +45,10 @@ before running the same commands.
    layer in 30s with [`npx smtp-warmer test --host smtp.example.com --port 587 --user me@example.com`](https://github.com/pypesdev/smtp-warmer)
    — TLS handshake, AUTH+RCPT sandbox (no mail sent), DNSBL reputation,
    reverse-DNS alignment. Zero deps, zero API keys, composite 0–10 score.</sub>
+   <sub>**New domain with no sending history?** Pair coldflow with
+   [`inbox-warmer`](https://github.com/pypesdev/inbox-warmer) — a self-hosted
+   BYO-seed-pool warm-up tool that builds domain reputation before your first
+   campaign. Zero paid services, runs against your own Google Workspace inbox.</sub>
 - upload a csv of contacts
 - Create a single-step email sequence with basic personalization ({first_name}).
 - Send the emails (with a strict, safe sending limit).
@@ -63,6 +67,31 @@ A curated, production-tested template pack lives in
 and follow-up. Each is plaintext, under ~120 words, with a single CTA and
 deliverability notes. See [`templates/README.md`](templates/README.md) for
 how to load one into a campaign.
+
+# Troubleshooting
+
+### Why is my mail landing in spam?
+
+When mail sent through coldflow goes to spam, the first question is always:
+**is the problem my domain/DNS, or is it the relay itself?**
+
+Run [`smtp-warmer`](https://github.com/pypesdev/smtp-warmer) to answer in 30 seconds
+without leaving the terminal:
+
+```bash
+npx smtp-warmer test --host smtp.example.com --port 587 --user me@example.com
+```
+
+It performs a TLS handshake, AUTH+RCPT sandbox (no mail actually sent), DNSBL
+reputation check, and reverse-DNS alignment — then gives you a composite 0–10
+deliverability score with specific fix instructions. Zero deps, zero API keys.
+
+If `smtp-warmer` scores your relay ≥ 8 but mail still goes to spam, the issue is
+your **domain configuration** (SPF, DKIM, DMARC). Use
+[`npx dmarc-doctor yourdomain.com`](https://github.com/pypesdev/dmarc-doctor) for
+colored DNS verdicts and a step-by-step fix guide.
+
+---
 
 # Move the needle TO-DO list:
 
