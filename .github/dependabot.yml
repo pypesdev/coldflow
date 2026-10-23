@@ -1,0 +1,23 @@
+version: 2
+updates:
+  # npm — grouped weekly updates. Patch/minor get PR'd; major get a separate PR.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      patch-and-minor:
+        applies-to: version-updates
+        update-types: [patch, minor]
+    labels: [dependencies]
+    # Security advisories always open a PR regardless of schedule.
+    # Review these PRs quickly — they are the point of this file.
+
+  # GitHub Actions
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    labels: [dependencies, ci]
