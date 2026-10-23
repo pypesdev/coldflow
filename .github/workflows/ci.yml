@@ -42,7 +42,7 @@ jobs:
           version: 10
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           # Matches the Node version pinned in Dockerfile.
           node-version: 22.17.0
